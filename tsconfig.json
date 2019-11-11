@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "lib": ["es6"],
+    "noEmit": true,
+    "target": "esnext",
+    "module": "commonjs", // commonjs방식으로 module을 import한다
+    "moduleResolution": "node", // nodejs에서 사용하는 방식으로 module을 찾아서 import한다
+    "strict": true,
+    "noResolve": false, // Do not add triple-slash references or module import targets to the list of compiled files.
+    "jsx": "react",
+    "allowSyntheticDefaultImports": true, // Allow default imports from modules with no default export. This does not affect code emit, just typechecking.
+    "resolveJsonModule":true, // import {name as appName} from '../app.json'; 이걸 가능하게 해준다. 즉 json파일을 import할 수 있도록 만들어준다
+    "typeRoots": ["./node_modules/@types", "./src/@types"]
+  },
+  "exclude": [
+    "node_modules",
+    "dest",
+    "android",
+    "ios"
+  ],
+  "include": ["./src/**/*", "index.js"]
+}
