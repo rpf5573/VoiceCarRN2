@@ -6,7 +6,7 @@ type Props = {
   backgroundColor?: string,
   part: Part,
   moveToControllerScreen: (part: Part) => void,
-  image: ImageSourcePropType
+  image: ImageSourcePropType,
 }
 export default class PartBox extends Component<Props> {
   constructor(props: Props) {
