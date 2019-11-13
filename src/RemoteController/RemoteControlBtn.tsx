@@ -6,6 +6,7 @@ import {
 import { RemoteBtnType, HaxagonViewType } from '../constants';
 import { RemoteControlBtnProps } from "../@types/index";
 import HaxagonView from '../CommonComponents/HaxagonView';
+import { buildChildren } from '@babel/types';
 
 type States = {}
 export default class RemoteControlBtn extends Component<RemoteControlBtnProps, States> {
@@ -13,7 +14,7 @@ export default class RemoteControlBtn extends Component<RemoteControlBtnProps, S
     super(props);
   }
   render() {
-    const { type, text, code, isActive, onPress, btnNumber, speed, onClickSpeedInputBtn } = this.props;
+    const { type, text, code, strokeColor, onPress, btnNumber, speed } = this.props;
     if ( type == RemoteBtnType.Empty ) {
       return (<View style={styles.empty}></View>)
     }
@@ -22,13 +23,9 @@ export default class RemoteControlBtn extends Component<RemoteControlBtnProps, S
       if ( ! code ) {
         opacity = 0.3;
       }
-      var strokeColor = "gold";
-      if ( isActive ) {
-        strokeColor = "blue";
-      }
       return (
         <HaxagonView type={HaxagonViewType.Text} opacity={opacity} strokeColor={strokeColor} text={text} 
-          onPress={() => { if ( code && speed ) { onPress(btnNumber, code, speed) } }}>
+          onPress={() => { if ( code && speed ) { onPress(type, text!, btnNumber, code, speed) } }}>
         </HaxagonView>
       )
     }
@@ -40,7 +37,7 @@ export default class RemoteControlBtn extends Component<RemoteControlBtnProps, S
     if ( type == RemoteBtnType.SpeedInputButton ) {
       return (
         <HaxagonView type={HaxagonViewType.Image} image={require('../images/speed-input.png')}
-          onPress={onClickSpeedInputBtn}>
+          onPress={onPress as ((() => void))}>
         </HaxagonView>
       )
     }

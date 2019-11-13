@@ -201,7 +201,7 @@ enum RemoteBtnType {
   Empty = 'empty',
   Text = 'text',
   PlaceHoldImage = 'placeholdimage',
-  SpeedInputButton = 'speedInputButton'
+  SpeedInputButton = 'speedInputButton',
 }
 
 export {

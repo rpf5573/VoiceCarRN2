@@ -41,10 +41,8 @@ type RemoteControlBtnProps = {
   text?: string,
   code?: number,
   speed? : number,
-  isActive: boolean,
-  onPress: (btnNumber: number, code: number, speed: number) => void,
-  onClickToInputSpeed?: () => void,
-  onClickSpeedInputBtn?: () => void
+  strokeColor: string,
+  onPress: ((type: RemoteBtnType, text: string, btnNumber: number, code: number, speed: number) => void) | (() => void)
 }
 
 export {

@@ -24,6 +24,7 @@ type Props = {
 }
 type States = {}
 
+
 export default class HaxagonView extends Component<Props, States> {
   constructor(props: Props) {
     super(props);

@@ -133,6 +133,7 @@ export default class SpeechScreen extends Component<Props,States> {
               <Text>에 해당하는{"\n"} 유사명령어를 입력해주세요</Text>
             </Text>
             <TextInput placeholder={"음성 기록"} style={styles.manualWordInput} onChangeText={text => {this.setState({manualWord: text})}}></TextInput>
+            <View style={{margin:10}}></View>
             <Button title="확인" onPress={this.saveSimilarWord}/>
           </View>
         </Modal>

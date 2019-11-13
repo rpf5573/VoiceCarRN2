@@ -5,19 +5,29 @@ import {
   Alert,
   Text,
   ImageBackground,
-  Dimensions
+  Dimensions,
+  Button
 } from "react-native";
-import Hexagon from "./RemoteControlBtn";
-import { parts, rapiURL, RemoteBtnType } from '../constants';
+import RemoteControlBtn from "./RemoteControlBtn";
+import { parts, rapiURL, RemoteBtnType, serverURL } from '../constants';
 import { Part, RemoteControlBtnProps } from "../@types";
+import { AxiosRequestConfig } from "axios";
 import axios from "axios";
 import { NavigationStackScreenProps } from 'react-navigation-stack';
+import Modal from "react-native-modal";
+import { TextInput } from 'react-native-gesture-handler';
+import { number } from 'prop-types';
 
 type Props = NavigationStackScreenProps<{team: number, part: Part}>
 type States = {
   activeBtnNumber: number|undefined,
   commandRightBefore: string|undefined,
-  sendingCommand: boolean
+  sendingCommand: boolean,
+  isSpeedInputMode: boolean,
+  selectedWord: string,
+  selectedWordCol: string,
+  isSpeedEditModalVisible: boolean,
+  speed: number
 };
 export default class RemoteControllerScreen extends React.Component<Props, States> {
   constructor(props: Props) {
@@ -25,16 +35,25 @@ export default class RemoteControllerScreen extends React.Component<Props, State
     this.state = {
       activeBtnNumber: undefined,
       commandRightBefore: undefined,
-      sendingCommand: false
+      sendingCommand: false,
+      isSpeedInputMode: false,
+      isSpeedEditModalVisible: false,
+      selectedWord: '',
+      selectedWordCol: '',
+      speed: 0
     }
-    this.elements = [
-      {type: RemoteBtnType.Empty}, {type: RemoteBtnType.SpeedInputButton} , {type: RemoteBtnType.Empty},
-      {type: RemoteBtnType.Text, text: "펴"}, {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "접어"},
-      {type: RemoteBtnType.Text, text: "들어"}, {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "내려"},
-      {type: RemoteBtnType.Empty}, {type: RemoteBtnType.Text, text: "빠르게"}, {type: RemoteBtnType.Empty},
-      {type: RemoteBtnType.Text, text: "왼쪽"}, {type: RemoteBtnType.Text, text: "앞으로"}, {type: RemoteBtnType.Text, text: "오른쪽"},
-      {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "뒤로"}, {type: RemoteBtnType.PlaceHoldImage}
-    ]
+  }
+  team: number = this.props.navigation.getParam("team");
+  part: Part = this.props.navigation.getParam("part");
+  elements: any[] = [
+    {type: RemoteBtnType.Empty}, {type: RemoteBtnType.SpeedInputButton} , {type: RemoteBtnType.Empty},
+    {type: RemoteBtnType.Text, text: "펴"}, {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "접어"},
+    {type: RemoteBtnType.Text, text: "들어"}, {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "내려"},
+    {type: RemoteBtnType.Empty}, {type: RemoteBtnType.Text, text: "빠르게"}, {type: RemoteBtnType.Empty},
+    {type: RemoteBtnType.Text, text: "왼쪽"}, {type: RemoteBtnType.Text, text: "앞으로"}, {type: RemoteBtnType.Text, text: "오른쪽"},
+    {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "뒤로"}, {type: RemoteBtnType.PlaceHoldImage}
+  ]
+  setElements = () => {
     if ( this.part == parts.ARM ) {
       this.elements[3].text = '팔펴'; // part.main에는 팔펴가 들어있을거거든!
       this.part.spells.forEach(part => {
@@ -53,8 +72,7 @@ export default class RemoteControllerScreen extends React.Component<Props, State
           this.elements[8].speed = part.speed;
         }
       });
-    }
-    else if ( this.part == parts.BOTTOM ) {
+    } else if ( this.part == parts.BOTTOM ) {
       this.part.spells.forEach(part => {
         // 10 = 빠르게
         if ( this.elements[10].text == part.main ) {
@@ -108,9 +126,6 @@ export default class RemoteControllerScreen extends React.Component<Props, State
       });
     }
   }
-  team: number = this.props.navigation.getParam("team");
-  part: Part = this.props.navigation.getParam("part");
-  elements: any[] = []
   sendCommand = (btnNumber:number, code: number, speed: number, isStop: boolean) => {
     var url = `${rapiURL(this.team)}/${code}/${speed}`;
     console.log("url", url);
@@ -144,40 +159,137 @@ export default class RemoteControllerScreen extends React.Component<Props, State
       Alert.alert("ERROR", "배터리 방전 / 알수없는 오류");
     });
   }
-  handleClickBtn = (btnNumber: number, code: number, speed: number) => {
-    // 현재 명령을 보내고 있는지 체크
-    if ( ! this.state.sendingCommand ) {
+  handleClickSpeedEditButton = () => {
+    this.toggleSpeedInputMode();
+  }
+  handleClickBtn = (type: RemoteBtnType, text: string, btnNumber: number, code: number, speed: number) => {
+    const {isSpeedInputMode, sendingCommand, activeBtnNumber} = this.state;
 
+    if ( isSpeedInputMode ) {
+      return this.setState({
+        selectedWord: text,
+        selectedWordCol: this.findColFromWord(text),
+        isSpeedEditModalVisible: true
+      });
+    }
+
+    console.log("code : ", code);
+    console.log("speed : ", speed);
+
+    // 현재 명령을 보내고 있는지 체크
+    if ( ! sendingCommand ) {
       // inactive상태의 버튼을 눌렀을때
-      if ( this.state.activeBtnNumber != btnNumber ) {
+      if ( activeBtnNumber != btnNumber ) {
         this.sendCommand(btnNumber, code, speed, false);
       }
-
       // active 상태의 버튼을 눌렀을때
       else {
         // code 에서 stop을 만들어야지!
         let stopCode = Math.floor(code/10) * 10; // 41이 들어오면 40으로 바꿔버린다!
         this.sendCommand(btnNumber, stopCode, speed, true);
       }
-
     }
   }
+  toggleSpeedInputMode = () => {
+    this.setState({
+      isSpeedInputMode: !this.state.isSpeedInputMode,
+      selectedWord: '',
+      speed: 0
+    });
+  }
+  closeSpeedEditModal = () => {
+    const { isSpeedEditModalVisible } = this.state;
+    if ( isSpeedEditModalVisible ) {
+      this.setState({
+        isSpeedEditModalVisible: false,
+        selectedWord: '',
+        speed: 0
+      });
+    }
+  }
+  saveSpeed = async () => {
+    const { selectedWordCol: col, selectedWord, speed } = this.state;
+    if ( !speed ) { return Alert.alert("ERROR", "속도값을 입력해주세요"); }
+    if ( speed < 1 || speed > 100 ) { return Alert.alert("ERROR", "속도값은 1 이상 100이하 여야만 합니다"); }
+
+    // server에 먼저 업로드
+    const team = this.team;
+    if ( !col ) { return Alert.alert("ERROR", "다시 시도해주세요(col is undefined)"); }
+
+    try {
+      let response = await this.uploadSpeedToServer(team, col, speed);
+      if ( response.status == 201 ) {
+        if ( response.data.error ) { return Alert.alert("ERROR", response.data.error); }
+      }
+      this.updateSpeedToLocal(speed);
+      Alert.alert(`[${selectedWord}]의 속도값을 ${speed}로 변경했습니다`);
+    } catch (err) {
+      console.log("err : ", err);
+    }
+  }
+  uploadSpeedToServer = async (team:number, col: string, speed: number) => {
+    let config: AxiosRequestConfig = {
+      method: 'POST',
+      url: `${serverURL}/speeds/insertPartColSpeed`,
+      data: {
+        col,
+        team,
+        speed
+      }
+    }
+    return axios(config);
+  }
+  updateSpeedToLocal = async (speed: number) => {
+    const { selectedWord } = this.state;
+    if ( ! selectedWord ) {
+      console.log("NO SELECTED WORD");
+      return false;
+    }
+    this.part.spells.forEach(spell => {
+      if ( spell.main == selectedWord ) {
+        console.log("요기서 변경해보리기!");
+        spell.speed = speed
+      }
+    });
+  }
+  findColFromWord = (word: string) : string => {
+    let col = '';
+    this.part.spells.forEach(spell => {
+      console.log(spell.main, word);
+      if ( spell.main == word ) {
+        col = spell.col;
+      }
+    });
+    return col;
+  }
+  
   renderBoxes = () => {
+    const { activeBtnNumber, selectedWord, isSpeedInputMode } = this.state;
     const items = []
     for ( const [index, value] of this.elements.entries() ) {
-      var isActive = false;
-      if ( (index+1) == this.state.activeBtnNumber ) {
-        isActive = true;
+      var strokeColor = 'gold';
+      if ( isSpeedInputMode ) {
+        // value.code가 있다는것은 이 파트에 해당하는 명령어들만 aqua로 바꾼다는 의미이다
+        if ( value.type == RemoteBtnType.Text && value.code ) {
+          strokeColor = 'aqua';
+        }
+      } else {
+        if ( (index+1) == activeBtnNumber ) {
+          strokeColor = 'blue';
+        }
       }
-
       items.push(
         <View style={styles.box} key={index}>
-          <Hexagon type={value.type} text={value.text} code={value.code} speed={value.speed} onPress={this.handleClickBtn} btnNumber={index+1} isActive={isActive}></Hexagon>
-        </View>);
+          <RemoteControlBtn type={value.type} text={value.text} code={value.code} speed={value.speed} onPress={ value.type == RemoteBtnType.SpeedInputButton ? this.handleClickSpeedEditButton : this.handleClickBtn} btnNumber={index+1} strokeColor={strokeColor}></RemoteControlBtn>
+        </View>
+      );
     }
-    return items
+    return items;
   }
   render() {
+    // 이렇게 해야 speed를 변경했을때 그 변경한것들이 반영된다.
+    // 왜냐면 주소값을 넘겨주는게 아니라 speed라는 값을 넘기기 때문에 반영이 안된다
+    this.setElements();
     return (
       <ImageBackground source={require("../images/default-background.jpeg")} style={styles.full}>
         <View style={styles.container}>
@@ -186,6 +298,26 @@ export default class RemoteControllerScreen extends React.Component<Props, State
             {this.renderBoxes()}
           </View>
         </View>
+        <Modal isVisible={this.state.isSpeedEditModalVisible} onBackdropPress={this.closeSpeedEditModal} style={styles.modalContainer}>
+          <View style={styles.modalInner}>
+            <Text style={[styles.textMiddle,styles.modalInnerText]}>
+              <Text style={styles.selectedWord}>[{this.state.selectedWord}]</Text>
+              <Text>명령어의{"\n"} 속도값을 입력해주세요</Text>
+            </Text>
+            <TextInput style={styles.speedEditInput} keyboardType={'numeric'}
+              onChangeText={text => { 
+                var numberChecker = /^\d+$/;
+                if ( numberChecker.test(text) ) {
+                  this.setState({speed: parseInt(text)})
+                } else {
+                  // 숫자말고 다른값을 입력하면 아예 그냥 속도를 0으로 만들어 버리기!
+                  this.setState({speed: 0})
+                }
+              }}></TextInput>
+            <View style={{margin:10}}></View>
+            <Button title="확인" onPress={this.saveSpeed}/>
+          </View>
+        </Modal>
       </ImageBackground>
     );
   }
@@ -225,4 +357,35 @@ const styles = StyleSheet.create({
     width: '33.33%',
     aspectRatio: 1.2
   },
+  modalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: '10%'
+  },
+  modalInner: {
+    width: '70%',
+    backgroundColor: 'white',
+    padding: 20
+  },
+  modalInnerText: {
+    fontSize: 20,
+    marginBottom: 20
+  },
+  textMiddle: {
+    textAlign: 'center'
+  },
+  speedEditInput: {
+    minHeight: 45,
+    width: '100%',
+    fontSize: 20,
+    padding: 10,
+    borderWidth: 2,
+    borderStyle: 'solid',
+    borderColor: '#222',
+    borderRadius: 10
+  },
+  selectedWord: {
+    color: 'blue'
+  }
 });
