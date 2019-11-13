@@ -10,9 +10,9 @@ import Svg, {
   Path,
   Image
 } from 'react-native-svg';
-import { SpeechSpellMenuItemType } from '../constants';
+import { SpeechSpellMenuButtonType } from '../constants';
 type Props = {
-  type: SpeechSpellMenuItemType,
+  type: SpeechSpellMenuButtonType,
   word?: string,
   strokeColor?: string,
   opacity?: number,
@@ -24,10 +24,10 @@ export default class HaxagonBtn extends Component<Props, States> {
     super(props);
   }
   render() {
-    if ( this.props.type == SpeechSpellMenuItemType.Empty ) {
+    if ( this.props.type == SpeechSpellMenuButtonType.Empty ) {
       return (<View style={styles.empty}></View>)
     }
-    if ( this.props.type == SpeechSpellMenuItemType.Text ) {
+    if ( this.props.type == SpeechSpellMenuButtonType.Text ) {
       return (
         <Svg width="100%" height="100%" viewBox="0 0 120 100">
           <Path

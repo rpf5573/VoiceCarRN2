@@ -1,4 +1,4 @@
-import {SpeechSpellMenuItemType, RemoteBtnType} from '../constants';
+import {SpeechSpellMenuButtonType, RemoteBtnType} from '../constants';
 
 type Spell = {
   main: string,

@@ -11,12 +11,12 @@ import {
   Dimensions,
   Button,
   KeyboardAvoidingView,
-  TextInput
+  TextInput,
 } from "react-native";
-import {Locale, rapiURL, parts, SpeechSpellMenuItemType} from '../constants';
+import {Locale, rapiURL, parts, SpeechSpellMenuButtonType, serverURL} from '../constants';
 import { NavigationStackScreenProps } from 'react-navigation-stack';
 import Voice from "react-native-voice";
-import SpeechSpellMenuItem from "./SpeechSpellMenuItem";
+import SpeechSpellMenuButton from "./SpeechSpellMenuButton";
 import axios from "axios";
 import { Part, Spell } from "../@types/index";
 import RecordBtn from './RecordBtn';
@@ -24,6 +24,7 @@ import HaxagonBtn from "./HaxagonBtn";
 import StopBtn from './StopBtn';
 import ManualRecordBtn from './ManualRecordBtn';
 import Modal from "react-native-modal";
+import {AxiosRequestConfig} from "axios";
 
 type Props = NavigationStackScreenProps<{team: number, part: Part}>
 type States = {
@@ -34,6 +35,8 @@ type States = {
   matchedSpellCode: number;
   isManualRecordModalVisible: boolean;
   manualWord: string;
+  selectedWord: string;
+  selectedWordCol: string;
 };
 export default class SpeechScreen extends Component<Props,States> {
   team: number = this.props.navigation.getParam("team");
@@ -45,7 +48,9 @@ export default class SpeechScreen extends Component<Props,States> {
     partialResults: [],
     matchedSpellCode: 0,
     isManualRecordModalVisible: false,
-    manualWord: ''
+    manualWord: '',
+    selectedWord: '',
+    selectedWordCol: ''
   };
   static navigationOptions = {
     title: "음성인식"
@@ -63,29 +68,29 @@ export default class SpeechScreen extends Component<Props,States> {
 
     let spells = this.part.spells
     this.elements = [
-      {type: SpeechSpellMenuItemType.Empty}, {type: SpeechSpellMenuItemType.Empty} , {type: SpeechSpellMenuItemType.Empty},
-      {type: SpeechSpellMenuItemType.Empty}, {type: SpeechSpellMenuItemType.Empty}, {type: SpeechSpellMenuItemType.Empty},
+      {type: SpeechSpellMenuButtonType.Empty}, {type: SpeechSpellMenuButtonType.Empty} , {type: SpeechSpellMenuButtonType.Empty},
+      {type: SpeechSpellMenuButtonType.Empty}, {type: SpeechSpellMenuButtonType.Empty}, {type: SpeechSpellMenuButtonType.Empty},
     ]
     if ( this.part == parts.ARM ) {
-      Object.assign(this.elements[0], {type: SpeechSpellMenuItemType.Text, word: spells[0].main, code: spells[0].code});
-      Object.assign(this.elements[2], {type: SpeechSpellMenuItemType.Text, word: spells[1].main, code: spells[1].code});
-      Object.assign(this.elements[3], {type: SpeechSpellMenuItemType.Text, word: spells[2].main, code: spells[2].code});
-      Object.assign(this.elements[5], {type: SpeechSpellMenuItemType.Text, word: spells[3].main, code: spells[3].code});
+      Object.assign(this.elements[0], {type: SpeechSpellMenuButtonType.Text, word: spells[0].main, code: spells[0].code});
+      Object.assign(this.elements[2], {type: SpeechSpellMenuButtonType.Text, word: spells[1].main, code: spells[1].code});
+      Object.assign(this.elements[3], {type: SpeechSpellMenuButtonType.Text, word: spells[2].main, code: spells[2].code});
+      Object.assign(this.elements[5], {type: SpeechSpellMenuButtonType.Text, word: spells[3].main, code: spells[3].code});
     }
     else if ( this.part == parts.BOTTOM ) {
-      Object.assign(this.elements[0], {type: SpeechSpellMenuItemType.Text, word: spells[2].main, code: spells[2].code});
-      Object.assign(this.elements[1], {type: SpeechSpellMenuItemType.Text, word: spells[4].main, code: spells[4].code});
-      Object.assign(this.elements[2], {type: SpeechSpellMenuItemType.Text, word: spells[3].main, code: spells[3].code});
-      Object.assign(this.elements[3], {type: SpeechSpellMenuItemType.Text, word: spells[0].main, code: spells[0].code});
-      Object.assign(this.elements[5], {type: SpeechSpellMenuItemType.Text, word: spells[1].main, code: spells[1].code});
+      Object.assign(this.elements[0], {type: SpeechSpellMenuButtonType.Text, word: spells[2].main, code: spells[2].code});
+      Object.assign(this.elements[1], {type: SpeechSpellMenuButtonType.Text, word: spells[4].main, code: spells[4].code});
+      Object.assign(this.elements[2], {type: SpeechSpellMenuButtonType.Text, word: spells[3].main, code: spells[3].code});
+      Object.assign(this.elements[3], {type: SpeechSpellMenuButtonType.Text, word: spells[0].main, code: spells[0].code});
+      Object.assign(this.elements[5], {type: SpeechSpellMenuButtonType.Text, word: spells[1].main, code: spells[1].code});
     }
     else if ( this.part == parts.HAND ) {
-      Object.assign(this.elements[0], {type: SpeechSpellMenuItemType.Text, word: spells[0].main, code: spells[0].code});
-      Object.assign(this.elements[2], {type: SpeechSpellMenuItemType.Text, word: spells[1].main, code: spells[1].code});
+      Object.assign(this.elements[0], {type: SpeechSpellMenuButtonType.Text, word: spells[0].main, code: spells[0].code});
+      Object.assign(this.elements[2], {type: SpeechSpellMenuButtonType.Text, word: spells[1].main, code: spells[1].code});
     }
     else if ( this.part == parts.WAIST ) {
-      Object.assign(this.elements[0], {type: SpeechSpellMenuItemType.Text, word: spells[0].main, code: spells[0].code});
-      Object.assign(this.elements[2], {type: SpeechSpellMenuItemType.Text, word: spells[1].main, code: spells[1].code});
+      Object.assign(this.elements[0], {type: SpeechSpellMenuButtonType.Text, word: spells[0].main, code: spells[0].code});
+      Object.assign(this.elements[2], {type: SpeechSpellMenuButtonType.Text, word: spells[1].main, code: spells[1].code});
     }
   }
 
@@ -120,13 +125,17 @@ export default class SpeechScreen extends Component<Props,States> {
             <View style={styles.bottom}>
               {recordBtn}
               <StopBtn style={styles.haxagonBtn} backgroundColor='red' onPress={this.stop}></StopBtn>
-              <ManualRecordBtn style={styles.haxagonBtn} backgroundColor={weakRed} onPress={this.toggleManualRecordModal}></ManualRecordBtn>
+              <ManualRecordBtn style={styles.haxagonBtn} backgroundColor={weakRed} onPress={this.toggleManualRecordModal} strokColor={this.state.selectedWord ? 'aqua' : undefined}></ManualRecordBtn>
             </View>
           </View>
           <Modal isVisible={this.state.isManualRecordModalVisible} onBackdropPress={this.toggleManualRecordModal} style={styles.modalContainer}>
             <View style={styles.modalInner}>
-              <Text style={[styles.textMiddle,styles.modalInnerText]}>텍스트를 입력해주세요</Text>
+              <Text style={[styles.textMiddle,styles.modalInnerText]}>
+                <Text style={styles.selectedWord}>[{this.state.selectedWord}]</Text>
+                <Text>에 해당하는{"\n"} 유사명령어를 입력해주세요</Text>
+              </Text>
               <TextInput placeholder={"음성 기록"} style={styles.manualWordInput} onChangeText={text => {this.setState({manualWord: text})}}></TextInput>
+              <Button title="확인" onPress={this.saveManualWord}/>
             </View>
           </Modal>
         </ImageBackground>
@@ -137,12 +146,16 @@ export default class SpeechScreen extends Component<Props,States> {
     let spellMenuItmes: JSX.Element[] = [];
     for ( const [index, el] of elements.entries() ) {
       let isMatched = false;
-      if ( this.state.matchedSpellCode ==  el.code) {
+      if ( this.state.matchedSpellCode == el.code) {
         isMatched = true;
+      }
+      let isSelected = false;
+      if ( this.state.selectedWord == el.word ) {
+        isSelected = true;
       }
       spellMenuItmes.push(
         <View key={index} style={styles.spellMenuItemWrapper}>
-          <SpeechSpellMenuItem type={el.type} strokeColor={isMatched ? "blue" : "gold"} word={el.word} />
+          <SpeechSpellMenuButton type={el.type} strokeColor={isSelected ? "aqua" : (isMatched ? "blue" : "gold")} word={el.word} onClick={this.onSpellMenuButtonClicked}/>
         </View>
       )
     }
@@ -314,7 +327,77 @@ export default class SpeechScreen extends Component<Props,States> {
     })
   }
   toggleManualRecordModal = () => {
-    this.setState({isManualRecordModalVisible: !this.state.isManualRecordModalVisible});
+    if ( ! this.state.selectedWord ) { return Alert.alert("ERROR", "명령어를 먼저 선택해주세요"); }
+    const col = this.findColFromWord(this.state.selectedWord);
+    if ( !col ) { return Alert.alert("ERROR", "단어 컬럼이 없습니다"); }
+    // 모달 닫으면 초기화 시켜줘야징
+    this.setState({
+      selectedWordCol: col,
+      isManualRecordModalVisible: !this.state.isManualRecordModalVisible
+    }, () => {
+      if ( ! this.state.isManualRecordModalVisible ) { this.resetSelectedWord(200); }
+    });
+  }
+  onSpellMenuButtonClicked = (word: string) => {
+    if ( this.state.selectedWord == word ) {
+      return this.resetSelectedWord();
+    }
+    this.setState({selectedWord: word});
+  }
+  findColFromWord = (word: string) : string => {
+    let col = '';
+    this.part.spells.forEach(spell => {
+      console.log(spell.main, word);
+      if ( spell.main == word ) {
+        col = spell.col;
+      }
+    });
+    return col;
+  }
+  resetSelectedWord = (after?: number) => {
+    if ( after && after > 0 ) {
+      setTimeout(() => {
+        this.setState({
+          selectedWord: '',
+          selectedWordCol: ''
+        });
+      }, after);
+    } else {
+      this.setState({
+        selectedWord: '',
+        selectedWordCol: ''
+      });
+    }
+  }
+  saveManualWord = async () => {
+    // server에 먼저 업로드
+    const team = this.team;
+    const {selectedWordCol: col, manualWord: similarWord} = this.state;
+    if ( !col || !similarWord ) { return Alert.alert("ERROR", "다시 시도해주세요(col & similarWord is undefined)"); }
+    try {
+      let response = await this.uploadManualWordToServer(team, col, similarWord);
+      if ( response.status == 201 ) {
+        if ( response.data.error ) { return Alert.alert("ERROR", response.data.error); }
+      }
+      Alert.alert(`[${similarWord}]를 성공적으로 추가했습니다`);
+    } catch (err) {
+      console.log("err : ", err);
+    }
+  }
+  uploadManualWordToServer = async (team:number, col: string, similarWord: string) => {
+    let config: AxiosRequestConfig = {
+      method: 'POST',
+      url: `${serverURL}/words/insertPartColWords`,
+      data: {
+        col,
+        team,
+        similarWord
+      }
+    }
+    return axios(config);
+  }
+  updateSimilarWordToLocal = async (similarWord: string) => {
+
   }
 }
 
@@ -360,6 +443,8 @@ const styles = StyleSheet.create({
   top: {
     width: '100%',
     alignItems: 'center',
+    position: 'relative',
+    zIndex: 1000,
   },
   middle: {
     position: 'absolute',
@@ -452,5 +537,8 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
     borderColor: '#222',
     borderRadius: 10
+  },
+  selectedWord: {
+    color: 'blue'
   }
 });
