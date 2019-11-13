@@ -13,7 +13,7 @@ export default class RemoteControlBtn extends Component<RemoteControlBtnProps, S
     super(props);
   }
   render() {
-    const { type, text, code, isActive, onPress, btnNumber, speed } = this.props;
+    const { type, text, code, isActive, onPress, btnNumber, speed, onClickSpeedInputBtn } = this.props;
     if ( type == RemoteBtnType.Empty ) {
       return (<View style={styles.empty}></View>)
     }
@@ -35,6 +35,13 @@ export default class RemoteControlBtn extends Component<RemoteControlBtnProps, S
     if ( type == RemoteBtnType.PlaceHoldImage ) {
       return (
         <HaxagonView type={HaxagonViewType.Image} image={require('../images/core.png')}></HaxagonView>
+      )
+    }
+    if ( type == RemoteBtnType.SpeedInputButton ) {
+      return (
+        <HaxagonView type={HaxagonViewType.Image} image={require('../images/speed-input.png')}
+          onPress={onClickSpeedInputBtn}>
+        </HaxagonView>
       )
     }
   }

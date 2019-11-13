@@ -96,7 +96,6 @@ export default class SpeechScreen extends Component<Props,States> {
 
   // render
   render() {
-    console.log(this.state.result);
     const weakRed = '#E74C3C';
     let recordBtn = (
       <RecordBtn onPress={this.startRecognizing} style={styles.haxagonBtn} backgroundColor={weakRed}></RecordBtn>
@@ -107,39 +106,37 @@ export default class SpeechScreen extends Component<Props,States> {
       );
     }
     return (
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} enabled>
-        <ImageBackground source={require("../images/default-background.jpeg")} style={styles.full}>
-          <View style={styles.container}>
-            <View style={styles.top}>
-              <Text style={styles.title}>Voice Control View</Text>
-              <View style={styles.spellMenuContainer}>
-                {this.renderSpellMenuItems(this.elements)}
-              </View>
-            </View>
-            <View style={styles.middle}>
-              <View style={styles.resultTextContainer}>
-                <View style={styles.resultOverlay}></View>
-                <Text style={styles.resultText}>{this.state.result}</Text>
-              </View>
-            </View>
-            <View style={styles.bottom}>
-              {recordBtn}
-              <StopBtn style={styles.haxagonBtn} backgroundColor='red' onPress={this.stop}></StopBtn>
-              <ManualRecordBtn style={styles.haxagonBtn} backgroundColor={weakRed} onPress={this.toggleManualRecordModal} strokColor={this.state.selectedWord ? 'aqua' : undefined}></ManualRecordBtn>
+      <ImageBackground source={require("../images/default-background.jpeg")} style={styles.full}>
+        <View style={styles.container}>
+          <View style={styles.top}>
+            <Text style={styles.title}>Voice Control View</Text>
+            <View style={styles.spellMenuContainer}>
+              {this.renderSpellMenuItems(this.elements)}
             </View>
           </View>
-          <Modal isVisible={this.state.isManualRecordModalVisible} onBackdropPress={this.toggleManualRecordModal} style={styles.modalContainer}>
-            <View style={styles.modalInner}>
-              <Text style={[styles.textMiddle,styles.modalInnerText]}>
-                <Text style={styles.selectedWord}>[{this.state.selectedWord}]</Text>
-                <Text>에 해당하는{"\n"} 유사명령어를 입력해주세요</Text>
-              </Text>
-              <TextInput placeholder={"음성 기록"} style={styles.manualWordInput} onChangeText={text => {this.setState({manualWord: text})}}></TextInput>
-              <Button title="확인" onPress={this.saveManualWord}/>
+          <View style={styles.middle}>
+            <View style={styles.resultTextContainer}>
+              <View style={styles.resultOverlay}></View>
+              <Text style={styles.resultText}>{this.state.result}</Text>
             </View>
-          </Modal>
-        </ImageBackground>
-      </KeyboardAvoidingView>
+          </View>
+          <View style={styles.bottom}>
+            {recordBtn}
+            <StopBtn style={styles.haxagonBtn} backgroundColor='red' onPress={this.stop}></StopBtn>
+            <ManualRecordBtn style={styles.haxagonBtn} backgroundColor={weakRed} onPress={this.toggleManualRecordModal} strokColor={this.state.selectedWord ? 'aqua' : undefined}></ManualRecordBtn>
+          </View>
+        </View>
+        <Modal isVisible={this.state.isManualRecordModalVisible} onBackdropPress={this.toggleManualRecordModal} style={styles.modalContainer}>
+          <View style={styles.modalInner}>
+            <Text style={[styles.textMiddle,styles.modalInnerText]}>
+              <Text style={styles.selectedWord}>[{this.state.selectedWord}]</Text>
+              <Text>에 해당하는{"\n"} 유사명령어를 입력해주세요</Text>
+            </Text>
+            <TextInput placeholder={"음성 기록"} style={styles.manualWordInput} onChangeText={text => {this.setState({manualWord: text})}}></TextInput>
+            <Button title="확인" onPress={this.saveSimilarWord}/>
+          </View>
+        </Modal>
+      </ImageBackground>
     );
   }
   renderSpellMenuItems = (elements: any[]) => {
@@ -179,8 +176,9 @@ export default class SpeechScreen extends Component<Props,States> {
     let matchedSpellCode = 0;
     let speed = 0;
     spellWord = spellWord.replace(/\s/g, "");
-    console.log('spell', spellWord);
-    this.part.spells.forEach((i: Spell) => {
+    this.part.spells.some((i: Spell) => {
+      // 관리자가 초기값을 null로 설정하면 값이 없을수도 있응께
+      if ( ! i.similar || ! Array.isArray(i.similar) ) { return false; }
       i.similar.forEach((z: string) => {
         if (z == spellWord) {
           matchedSpellCode = i.code;
@@ -369,22 +367,37 @@ export default class SpeechScreen extends Component<Props,States> {
       });
     }
   }
-  saveManualWord = async () => {
+  saveSimilarWord = async () => {
     // server에 먼저 업로드
     const team = this.team;
-    const {selectedWordCol: col, manualWord: similarWord} = this.state;
+    let {selectedWordCol: col, manualWord: similarWord} = this.state;
     if ( !col || !similarWord ) { return Alert.alert("ERROR", "다시 시도해주세요(col & similarWord is undefined)"); }
+
+    // 스페이스 바를 제거하고나서 서버에 업로드를 하던지 해야한다.
+    similarWord = similarWord.replace(/\s/g, "");
+    // 한글하고 영어만 받는다잉
+    const pattern_ko_en = /^[ㄱ-ㅎ|가-힣|a-z|A-Z|\*]+$/
+    if ( ! pattern_ko_en.test(similarWord) ) {
+      return Alert.alert("ERROR", "한글/영어만 입력 가능합니다");
+    }
+
     try {
-      let response = await this.uploadManualWordToServer(team, col, similarWord);
+      let response = await this.uploadSimilarWordToServer(team, col, similarWord);
       if ( response.status == 201 ) {
         if ( response.data.error ) { return Alert.alert("ERROR", response.data.error); }
       }
-      Alert.alert(`[${similarWord}]를 성공적으로 추가했습니다`);
+      if ( response.data.updatedPartWords ) {
+        this.updateSimilarWordToLocal(response.data.updatedPartWords);
+        Alert.alert(`[${similarWord}]를 성공적으로 추가했습니다`);
+        console.log("part : ", this.part);
+      } else {
+        Alert.alert('ERROR', '업데이트된 유사명령어롤 서버로부터 가져오지 못했습니다');
+      }
     } catch (err) {
       console.log("err : ", err);
     }
   }
-  uploadManualWordToServer = async (team:number, col: string, similarWord: string) => {
+  uploadSimilarWordToServer = async (team:number, col: string, similarWord: string) => {
     let config: AxiosRequestConfig = {
       method: 'POST',
       url: `${serverURL}/words/insertPartColWords`,
@@ -396,8 +409,17 @@ export default class SpeechScreen extends Component<Props,States> {
     }
     return axios(config);
   }
-  updateSimilarWordToLocal = async (similarWord: string) => {
-
+  updateSimilarWordToLocal = async (similarWords: Array<string>) => {
+    const { selectedWord } = this.state;
+    if ( ! selectedWord ) {
+      console.log("NO SELECTED WORD");
+      return false;
+    }
+    this.part.spells.forEach(spell => {
+      if ( spell.main == selectedWord ) {
+        spell.similar = similarWords
+      }
+    });
   }
 }
 
@@ -515,6 +537,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: '10%'
   },
   modalInner: {
     width: '70%',

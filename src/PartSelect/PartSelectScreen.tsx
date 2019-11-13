@@ -48,14 +48,16 @@ export default class PartSelectScreen extends Component<Props, States> {
   moveToControllerScreen = async (part: Part) => {
     let team: number = this.props.navigation.getParam('team');
     this.toggleSpinner();
-    this.getPartWords(team, part, () => {
-      let rcUsageState = this.props.navigation.getParam('rcUsageState');
-      if ( rcUsageState ) {
+    let rcUsageState = this.props.navigation.getParam('rcUsageState');
+    if ( rcUsageState ) {
+      this.getPartSpeeds(team, part, () => {
         this.moveToRCScreen(team, part);
-      } else {
+      });
+    } else {
+      this.getPartWords(team, part, () => {
         this.moveToSpeechScreen(team, part);
-      }
-    });
+      })
+    }
   }
   getPartWords = (team: number ,part: Part, callback: () => void ) => {
     let config : AxiosRequestConfig = {
@@ -89,6 +91,37 @@ export default class PartSelectScreen extends Component<Props, States> {
       return Alert.alert("ERROR", "알수없는에러 발생");
     });
   }
+  getPartSpeeds = (team: number ,part: Part, callback: () => void ) => {
+    let config : AxiosRequestConfig = {
+      method: 'POST',
+      url: `${serverURL}/speeds/getPartSpeeds`,
+      data: {
+        team,
+        partCols: part.spells.map((spell) => {return spell.col})
+      }
+    };
+    axios(config).then((res) => {
+      this.toggleSpinner();
+      if ( res.status == 201 ) {
+        if ( res.data.error ) {
+          return Alert.alert("ERROR", res.data.error);
+        }
+        const speeds = res.data.speeds;
+        // 이렇게 하긴 했는데, 조심해야되. 이거 주소값으로 설정한거니까!
+        for ( var i = 0; i < part.spells.length; i++ ) {
+          const key = part.spells[i].col;
+          part.spells[i].speed = speeds[key];
+        }
+        callback();
+      } else {
+        return Alert.alert("ERROR", "서버로부터 잘못된 응답을 받았습니다");
+      }
+    }).catch((err) => {
+      this.toggleSpinner();
+      console.error(err);
+      return Alert.alert("ERROR", "알수없는에러 발생");
+    });
+  } 
   renderPartBoxes = (parts: Parts) => {
     let rcUsageState = this.props.navigation.getParam('rcUsageState');
     let partBoxes = []

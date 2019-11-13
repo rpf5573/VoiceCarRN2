@@ -28,7 +28,7 @@ export default class RemoteControllerScreen extends React.Component<Props, State
       sendingCommand: false
     }
     this.elements = [
-      {type: RemoteBtnType.Empty}, {type: RemoteBtnType.PlaceHoldImage} , {type: RemoteBtnType.Empty},
+      {type: RemoteBtnType.Empty}, {type: RemoteBtnType.SpeedInputButton} , {type: RemoteBtnType.Empty},
       {type: RemoteBtnType.Text, text: "펴"}, {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "접어"},
       {type: RemoteBtnType.Text, text: "들어"}, {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "내려"},
       {type: RemoteBtnType.Empty}, {type: RemoteBtnType.Text, text: "빠르게"}, {type: RemoteBtnType.Empty},
@@ -113,6 +113,7 @@ export default class RemoteControllerScreen extends React.Component<Props, State
   elements: any[] = []
   sendCommand = (btnNumber:number, code: number, speed: number, isStop: boolean) => {
     var url = `${rapiURL(this.team)}/${code}/${speed}`;
+    console.log("url", url);
     axios(url).then((response) => {
       if (response.status == 201) {
         if (response.data.error) {
@@ -168,6 +169,7 @@ export default class RemoteControllerScreen extends React.Component<Props, State
       if ( (index+1) == this.state.activeBtnNumber ) {
         isActive = true;
       }
+
       items.push(
         <View style={styles.box} key={index}>
           <Hexagon type={value.type} text={value.text} code={value.code} speed={value.speed} onPress={this.handleClickBtn} btnNumber={index+1} isActive={isActive}></Hexagon>

@@ -28,7 +28,7 @@ const parts: Parts = {
         col: 'hand_open',
         similar: [],
         code: 11,
-        speed: 80,
+        speed: 0,
         command: 'motor-6/forward/45'
       },
       {
@@ -36,7 +36,7 @@ const parts: Parts = {
         col: 'hand_close',
         similar: [],
         code: 12,
-        speed: 80,
+        speed: 0,
         command: 'motor-6/backward/45'
       },
     ],
@@ -54,7 +54,7 @@ const parts: Parts = {
         col: 'elbow_open',
         similar: [],
         code: 21,
-        speed: 60,
+        speed: 0,
         command: 'motor-5/forward/45'
       },
       {
@@ -62,7 +62,7 @@ const parts: Parts = {
         col: 'elbow_close',
         similar: [],
         code: 22,
-        speed: 60,
+        speed: 0,
         command: 'motor-5/backward/45'
       },
       {
@@ -70,7 +70,7 @@ const parts: Parts = {
         col: 'shoulder_open',
         similar: [],
         code: 23,
-        speed: 80,
+        speed: 0,
         command: 'motor-2/backward/45'
       },
       {
@@ -78,7 +78,7 @@ const parts: Parts = {
         col: 'shoulder_close',
         similar: [],
         code: 24,
-        speed: 60,
+        speed: 0,
         command: 'motor-2/forward/45'
       },
     ],
@@ -96,7 +96,7 @@ const parts: Parts = {
         col: 'waist_left',
         similar: [],
         code: 31,
-        speed: 30,
+        speed: 0,
         command: 'motor-1/forward/60'
       },
       {
@@ -104,7 +104,7 @@ const parts: Parts = {
         col: 'waist_right',
         similar: [],
         code: 32,
-        speed: 30,
+        speed: 0,
         command: 'motor-1/backward/60'
       }
     ],
@@ -122,15 +122,15 @@ const parts: Parts = {
         col: 'bottom_go',
         similar: [],
         code: 41,
-        speed: 60, // 99가 max다 !! 100은 아니되옵니다~
+        speed: 0, // 99가 max다 !! 100은 아니되옵니다~
         command: 'bottom/forward/100'
       },
       {
         main: '뒤로', 
-        col: 'bottom_go_fast',
+        col: 'bottom_back',
         similar: [],
         code: 42,
-        speed: 60,
+        speed: 0,
         command: 'bottom/backward/100'
       },
       {
@@ -138,7 +138,7 @@ const parts: Parts = {
         col: 'bottom_left',
         similar: [],
         code: 43,
-        speed: 40,
+        speed: 0,
         command: 'bottom/left/70'
       },
       {
@@ -146,15 +146,15 @@ const parts: Parts = {
         col: 'bottom_right',
         similar: [],
         code: 44,
-        speed: 40,
+        speed: 0,
         command: 'bottom/right/70'
       },
       {
         main: '빠르게',
-        col: 'bottom_back',
+        col: 'bottom_go_fast',
         similar: [],
         code: 45,
-        speed: 99,
+        speed: 0,
         command: 'bottom/forward/100'
       },
     ],
@@ -200,7 +200,8 @@ enum SpeechSpellMenuButtonType {
 enum RemoteBtnType {
   Empty = 'empty',
   Text = 'text',
-  PlaceHoldImage = 'placeholdimage'
+  PlaceHoldImage = 'placeholdimage',
+  SpeedInputButton = 'speedInputButton'
 }
 
 export {

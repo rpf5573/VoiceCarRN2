@@ -3,7 +3,7 @@ import {SpeechSpellMenuButtonType, RemoteBtnType} from '../constants';
 type Spell = {
   main: string,
   col: string,
-  similar: string[],
+  similar: string[]|null,
   code: number,
   speed: number,
   command?: string // 아직은 undefined
@@ -42,7 +42,9 @@ type RemoteControlBtnProps = {
   code?: number,
   speed? : number,
   isActive: boolean,
-  onPress: (btnNumber: number, code: number, speed: number) => void
+  onPress: (btnNumber: number, code: number, speed: number) => void,
+  onClickToInputSpeed?: () => void,
+  onClickSpeedInputBtn?: () => void
 }
 
 export {
