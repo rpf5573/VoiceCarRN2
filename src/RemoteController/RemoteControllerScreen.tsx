@@ -222,7 +222,9 @@ export default class RemoteControllerScreen extends React.Component<Props, State
         if ( response.data.error ) { return Alert.alert("ERROR", response.data.error); }
       }
       this.updateSpeedToLocal(speed);
-      Alert.alert(`[${selectedWord}]의 속도값을 ${speed}로 변경했습니다`);
+      Alert.alert('', `[${selectedWord}]의 속도값을 ${speed}로 변경했습니다`, [
+        {text: 'OK', onPress: this.closeSpeedEditModal },
+      ]);
     } catch (err) {
       console.log("err : ", err);
     }

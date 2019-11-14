@@ -318,7 +318,8 @@ export default class SpeechScreen extends Component<Props,States> {
   };
 
   stop = () => {
-    this.stopRecognizing();
+    console.log('stop is called');
+    this.cancelRecognizing();
     this.sendCommand(this.part.stop.code, 10, () => {
       this.setState({
         active: false,
