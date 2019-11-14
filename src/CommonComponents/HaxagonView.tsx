@@ -61,7 +61,7 @@ export default class HaxagonView extends Component<Props, States> {
             height="70%"
             x="20"
             y="12"
-            preserveAspectRatio="xMidYMid slice"
+            // preserveAspectRatio="xMidYMid slice"
             opacity="1.0"
             href={image}
             clipPath="url(#clip)"

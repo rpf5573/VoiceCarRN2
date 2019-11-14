@@ -92,6 +92,8 @@ export default class SpeechScreen extends Component<Props,States> {
       Object.assign(this.elements[0], {type: SpeechSpellMenuButtonType.Text, word: spells[0].main, code: spells[0].code});
       Object.assign(this.elements[2], {type: SpeechSpellMenuButtonType.Text, word: spells[1].main, code: spells[1].code});
     }
+
+    console.log('part : ', this.part);
   }
 
   // render
