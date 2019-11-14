@@ -178,7 +178,7 @@ const rapiURL = (team: number) => {
   // return `http://localhost:8080/command`;
   return `http://voice-car-0${team}.jp.ngrok.io`;
 }
-const isDev = true;
+const isDev = false;
 const serverURL = isDev ? 'http://localhost:8080' : 'http://voice-car.club';
 
 enum ROUTES {
