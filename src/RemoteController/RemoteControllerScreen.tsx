@@ -257,12 +257,20 @@ export default class RemoteControllerScreen extends React.Component<Props, State
   findColFromWord = (word: string) : string => {
     let col = '';
     this.part.spells.forEach(spell => {
-      console.log(spell.main, word);
       if ( spell.main == word ) {
         col = spell.col;
       }
     });
     return col;
+  }
+  findSpeedFromWord = (word: string) : number => {
+    let speed = 0;
+    this.part.spells.forEach(spell => {
+      if ( spell.main == word ) {
+        speed = spell.speed;
+      }
+    });
+    return speed;
   }
   
   renderBoxes = () => {
@@ -292,6 +300,7 @@ export default class RemoteControllerScreen extends React.Component<Props, State
     // 이렇게 해야 speed를 변경했을때 그 변경한것들이 반영된다.
     // 왜냐면 주소값을 넘겨주는게 아니라 speed라는 값을 넘기기 때문에 반영이 안된다
     this.setElements();
+    const { isSpeedEditModalVisible, selectedWord } = this.state;
     return (
       <ImageBackground source={require("../images/default-background.jpeg")} style={styles.full}>
         <View style={styles.container}>
@@ -300,10 +309,10 @@ export default class RemoteControllerScreen extends React.Component<Props, State
             {this.renderBoxes()}
           </View>
         </View>
-        <Modal isVisible={this.state.isSpeedEditModalVisible} onBackdropPress={this.closeSpeedEditModal} style={styles.modalContainer}>
+        <Modal isVisible={isSpeedEditModalVisible} onBackdropPress={this.closeSpeedEditModal} style={styles.modalContainer}>
           <View style={styles.modalInner}>
             <Text style={[styles.textMiddle,styles.modalInnerText]}>
-              <Text style={styles.selectedWord}>[{this.state.selectedWord}]</Text>
+              <Text style={styles.selectedWord}>[{selectedWord}]</Text>
               <Text>명령어의{"\n"} 속도값을 입력해주세요</Text>
             </Text>
             <TextInput style={styles.speedEditInput} keyboardType={'numeric'}
@@ -315,7 +324,7 @@ export default class RemoteControllerScreen extends React.Component<Props, State
                   // 숫자말고 다른값을 입력하면 아예 그냥 속도를 0으로 만들어 버리기!
                   this.setState({speed: 0})
                 }
-              }}></TextInput>
+              }} placeholder={ selectedWord ? `현재 : ${this.findSpeedFromWord(selectedWord)}` : ''}></TextInput>
             <View style={{margin:10}}></View>
             <Button title="확인" onPress={this.saveSpeed}/>
           </View>

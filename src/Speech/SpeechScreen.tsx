@@ -4,29 +4,29 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
-  TouchableWithoutFeedback,
   Alert,
   ImageBackground,
   Dimensions,
   Button,
-  KeyboardAvoidingView,
   TextInput,
 } from "react-native";
 import {Locale, rapiURL, parts, SpeechSpellMenuButtonType, serverURL} from '../constants';
-import { NavigationStackScreenProps } from 'react-navigation-stack';
 import Voice from "react-native-voice";
 import SpeechSpellMenuButton from "./SpeechSpellMenuButton";
 import axios from "axios";
-import { Part, Spell } from "../@types/index";
+import { Part, Spell, ISpeechScreen } from "../@types/index";
 import RecordBtn from './RecordBtn';
-import HaxagonBtn from "./HaxagonBtn";
 import StopBtn from './StopBtn';
 import ManualRecordBtn from './ManualRecordBtn';
 import Modal from "react-native-modal";
 import {AxiosRequestConfig} from "axios";
 
-type Props = NavigationStackScreenProps<{team: number, part: Part}>
+type Props = {
+  team: number,
+  part: Part,
+  onSpeechResults: (e: Voice.Results) => void,
+  finishRecognizing: () => void,
+}
 type States = {
   active: boolean;
   error: string;
@@ -38,10 +38,11 @@ type States = {
   selectedWord: string;
   selectedWordCol: string;
 };
+
 export default class SpeechScreen extends Component<Props,States> {
-  team: number = this.props.navigation.getParam("team");
-  part: Part = this.props.navigation.getParam("part");
-  state = {
+  team: number = this.props.team;
+  part: Part = this.props.part;
+  defaultState = {
     active: false,
     error: "",
     result: "",
@@ -52,6 +53,7 @@ export default class SpeechScreen extends Component<Props,States> {
     selectedWord: '',
     selectedWordCol: ''
   };
+  state = {...this.defaultState};
   static navigationOptions = {
     title: "음성인식"
   };
@@ -63,6 +65,11 @@ export default class SpeechScreen extends Component<Props,States> {
     Voice.onSpeechEnd = this.onSpeechEnd
     Voice.onSpeechError = this.onSpeechError
     Voice.onSpeechResults = this.onSpeechResults
+
+    // bind를 해줘야 SpeechScreen을 상속받는 클래스의 함수를 호출한다.
+    // 안해주고 arrow function쓰면 상속받는 클래스(SpeechScreenIOS)의 함수를 호출 안하고 여기에있는 함수를 호출한다₩
+    this.onSpeechResults = this.onSpeechResults.bind(this);
+    this.finishRecognizing = this.finishRecognizing.bind(this);
     this.sendCommand = this.sendCommand.bind(this);
     this.getMatchedSpell = this.getMatchedSpell.bind(this);
 
@@ -92,8 +99,6 @@ export default class SpeechScreen extends Component<Props,States> {
       Object.assign(this.elements[0], {type: SpeechSpellMenuButtonType.Text, word: spells[0].main, code: spells[0].code});
       Object.assign(this.elements[2], {type: SpeechSpellMenuButtonType.Text, word: spells[1].main, code: spells[1].code});
     }
-
-    console.log('part : ', this.part);
   }
 
   // render
@@ -103,8 +108,9 @@ export default class SpeechScreen extends Component<Props,States> {
       <RecordBtn onPress={this.startRecognizing} style={styles.haxagonBtn} backgroundColor={weakRed}></RecordBtn>
     );
     if (this.state.active) {
+      console.log("this.state.active is true");
       recordBtn = (
-        <RecordBtn onPress={(Platform.OS == 'ios' ? this.cancelRecognizing : this.stopRecognizing)} style={styles.haxagonBtn} backgroundColor='blue'></RecordBtn>
+        <RecordBtn onPress={this.finishRecognizing} style={styles.haxagonBtn} backgroundColor='blue'></RecordBtn>
       );
     }
     return (
@@ -163,12 +169,12 @@ export default class SpeechScreen extends Component<Props,States> {
   }
 
   // custom function
-  sendCommand = (code: number, speed: number, callback: () => void) => {
-    callback();
+  sendCommand = (code: number, speed: number, callback?: () => void) => {
     let url: string = `${rapiURL(this.team)}/${code}/${speed}`;
     console.log('url in sendCommand', url);
     axios(url).then((response) => {
       if ( response.status == 201 ) {
+        if ( callback ) { callback(); }
       } else {
       }
     }).catch((err) => {
@@ -200,42 +206,17 @@ export default class SpeechScreen extends Component<Props,States> {
     Voice.destroy().then(Voice.removeAllListeners);
   }
 
-  onCancelRecognition = () => {
-    if ( Platform.OS != 'ios' ) { return }
-    this.setState({
-      active: false
-    }, () => {
-      let result = this.getMatchedSpell(this.state.result);
-      console.log("result - onCancelRecognition", result);
-      if ( result.code > 0 ) {
-        this.sendCommand(result.code, result.speed, () => {
-          this.setState({
-            active: false,
-            matchedSpellCode: 0
-          });
-        });
-      } else {
-        console.log('nothing matched');
-        this.setState({
-          active: false,
-        });
-      }
-    });
-  }
-
   // voice recognition functions
   onSpeechStart = (e: Voice.StartEvent) => {
     // eslint-disable-next-line
     console.log("onSpeechStart: ", e)
   };
-
   onSpeechEnd = (e: Voice.EndEvent) => {
     console.log("onSpeechEnd");
     this.setState({
       active: false
     });
   }
-
   onSpeechError = (e: Voice.ErrorEvent) => {
     console.log(e);
     this.setState({
@@ -243,66 +224,20 @@ export default class SpeechScreen extends Component<Props,States> {
       active: false
     });
   };
-
-  onSpeechResults = (e: Voice.Results) => {
-    console.log('onSpeechResults');
-    const val: string = e.value[0];
-    console.log(val);
-    this.setState({
-      result: val,
-    }, () => {
-      // 안드로이드만 onSpeechResults에서 서버로 명령을 보낸다
-      // 왜냐하면, 안드로이드는 지가 알아서 음성인식이 꺼지기 때문이다
-      if ( Platform.OS != 'android' ) { return false }
-      let result = this.getMatchedSpell(this.state.result);
-      console.log("result", result);
-      if ( result.code > 0 ) {
-        this.sendCommand(result.code, result.speed, () => {
-          this.setState({
-            active: false,
-            matchedSpellCode: 0
-          });
-        });
-      } else {
-        console.log('nothing matched');
-        this.setState({
-          active: false,
-        });
-      }
-    });
+  onSpeechResults(e: Voice.Results) {
+    console.error("onSpeechResults should be defined in extended class");
   };
   startRecognizing = async () => {
-    this.setState({
-      active: true,
-      error: "",
-      result: '',
-      partialResults: [],
-      matchedSpellCode: 0
-    });
+    if ( this.state.selectedWord ) { return Alert.alert("유사명령어 입력중에는 포크봇을 조종할 수 없습니다"); }
     try {
+      this.setState({...this.defaultState, active: true});
       await Voice.start(Locale.ko_KR);
     } catch (e) {
       console.error(e);
     }
   };
-  stopRecognizing = async () => {
-    console.log("stopRecognizing is called");
-    try {
-      await Voice.stop();
-      console.log('after Voice Stop');
-    } catch (e) {
-      console.error(e);
-    }
-  };
-  cancelRecognizing = async () => {
-    console.log("cancelRecognizing");
-    try {
-      await Voice.cancel();
-      this.onCancelRecognition();
-    } catch (e) {
-      console.log('error in cancelREcogizing');
-      console.error(e);
-    }
+  async finishRecognizing() {
+    console.error("finishRecognizing should be defined in extended class");
   };
   destroyRecognizer = async () => {
     try {
@@ -316,17 +251,19 @@ export default class SpeechScreen extends Component<Props,States> {
       partialResults: []
     });
   };
+  onSpeechFinish = (speechResult: string) => {}
 
-  stop = () => {
-    console.log('stop is called');
-    this.cancelRecognizing();
-    this.sendCommand(this.part.stop.code, 10, () => {
-      this.setState({
-        active: false,
-        result: '',
-        matchedSpellCode: 0
+  stop = async () => {
+    if ( this.state.selectedWord ) { return Alert.alert("유사명령어 입력중에는 포크봇을 조종할 수 없습니다"); }
+    try {
+      await Voice.cancel();
+      this.setState({...this.defaultState}, () => {
+        this.sendCommand(this.part.stop.code, 10);
       });
-    })
+    } catch(e) {
+      console.log('error in cancelREcogizing');
+      console.error(e);
+    }
   }
   toggleManualRecordModal = () => {
     if ( ! this.state.selectedWord ) { return Alert.alert("ERROR", "명령어를 먼저 선택해주세요"); }
@@ -341,6 +278,8 @@ export default class SpeechScreen extends Component<Props,States> {
     });
   }
   onSpellMenuButtonClicked = (word: string) => {
+    // 음성인식중에는 유사명령어 입력 못하게 막자
+    if ( this.state.active ) { return Alert.alert("음성인식중에는 설정할 수 없습니다"); }
     if ( this.state.selectedWord == word ) {
       return this.resetSelectedWord();
     }

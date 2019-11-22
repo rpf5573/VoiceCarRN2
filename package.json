@@ -9,7 +9,7 @@
     "test": "jest",
     "lint": "eslint .",
     "android:shake": "adb shell input keyevent 82",
-    "ios:build": "react-native bundle --entry-file='index.js' --bundle-output='./ios/main.jsbundle' --dev=false --platform='ios' --assets-dest='./ios'",
+    "ios:bundle": "react-native bundle --entry-file='index.js' --bundle-output='./ios/main.jsbundle' --dev=false --platform='ios' --assets-dest='./ios'",
     "android:build": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res",
     "ios:release": "react-native run-ios --configuration Release --device iPhone",
     "ios:debug": "react-native run-ios --configuration --device iPhone",

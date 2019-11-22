@@ -44,6 +44,11 @@ type RemoteControlBtnProps = {
   strokeColor: string,
   onPress: ((type: RemoteBtnType, text: string, btnNumber: number, code: number, speed: number) => void) | (() => void)
 }
+interface ISpeechScreen {
+  prototype?: any;
+  getMatchedSpell?: (spellWord: string) => { code: number, speed: number }
+  sendCommand?: (code: number, speed: number, callback?: () => void) => void
+}
 
 export {
   Spell,
@@ -52,5 +57,6 @@ export {
   Parts,
   InitialAppState,
   DirBtn,
-  RemoteControlBtnProps
+  RemoteControlBtnProps,
+  ISpeechScreen
 }
