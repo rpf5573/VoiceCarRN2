@@ -25,9 +25,10 @@ type Props = {
   team: number,
   part: Part,
   onSpeechResults: (e: Voice.Results) => void,
-  finishRecognizing: () => void,
+  finishRecognizing: () => Promise<void>,
 }
 type States = {
+  isDisabledVoiceBtn: boolean;
   active: boolean;
   error: string;
   result: string;
@@ -43,6 +44,7 @@ export default class SpeechScreen extends Component<Props,States> {
   team: number = this.props.team;
   part: Part = this.props.part;
   defaultState = {
+    isDisabledVoiceBtn: false,
     active: false,
     error: "",
     result: "",
@@ -61,17 +63,16 @@ export default class SpeechScreen extends Component<Props,States> {
 
   constructor(props: Props) {
     super(props);
-    Voice.onSpeechStart = this.onSpeechStart
-    Voice.onSpeechEnd = this.onSpeechEnd
-    Voice.onSpeechError = this.onSpeechError
-    Voice.onSpeechResults = this.onSpeechResults
 
     // bind를 해줘야 SpeechScreen을 상속받는 클래스의 함수를 호출한다.
     // 안해주고 arrow function쓰면 상속받는 클래스(SpeechScreenIOS)의 함수를 호출 안하고 여기에있는 함수를 호출한다₩
-    this.onSpeechResults = this.onSpeechResults.bind(this);
-    this.finishRecognizing = this.finishRecognizing.bind(this);
     this.sendCommand = this.sendCommand.bind(this);
     this.getMatchedSpell = this.getMatchedSpell.bind(this);
+
+    Voice.onSpeechStart = this.onSpeechStart
+    Voice.onSpeechEnd = this.onSpeechEnd
+    Voice.onSpeechError = this.onSpeechError
+    Voice.onSpeechResults = this.props.onSpeechResults
 
     let spells = this.part.spells
     this.elements = [
@@ -104,15 +105,6 @@ export default class SpeechScreen extends Component<Props,States> {
   // render
   render() {
     const weakRed = '#E74C3C';
-    let recordBtn = (
-      <RecordBtn onPress={this.startRecognizing} style={styles.haxagonBtn} backgroundColor={weakRed}></RecordBtn>
-    );
-    if (this.state.active) {
-      console.log("this.state.active is true");
-      recordBtn = (
-        <RecordBtn onPress={this.finishRecognizing} style={styles.haxagonBtn} backgroundColor='blue'></RecordBtn>
-      );
-    }
     return (
       <ImageBackground source={require("../images/default-background.jpeg")} style={styles.full}>
         <View style={styles.container}>
@@ -129,7 +121,7 @@ export default class SpeechScreen extends Component<Props,States> {
             </View>
           </View>
           <View style={styles.bottom}>
-            {recordBtn}
+            <RecordBtn onPress={this.handleRecordBtnClick} style={styles.haxagonBtn} backgroundColor={ this.state.active ? 'blue' : weakRed}></RecordBtn>
             <StopBtn style={styles.haxagonBtn} backgroundColor='red' onPress={this.stop}></StopBtn>
             <ManualRecordBtn style={styles.haxagonBtn} backgroundColor={weakRed} onPress={this.toggleManualRecordModal} strokColor={this.state.selectedWord ? 'aqua' : undefined}></ManualRecordBtn>
           </View>
@@ -166,6 +158,22 @@ export default class SpeechScreen extends Component<Props,States> {
       )
     }
     return spellMenuItmes;
+  }
+  handleRecordBtnClick = () => {
+    console.log("handleRecordBtnClick");
+    if ( this.state.isDisabledVoiceBtn ) {
+      console.log("지금은 누르면 안되용!");
+      return;
+    }
+    // 너무 파바바박 누르면 렉걸리니까 이렇게 딜레이를 준다잉
+    this.setState({isDisabledVoiceBtn: true}, () => {
+      if ( this.state.active ) {
+        this.finishRecognizing();
+      } else {
+        this.startRecognizing();
+      }
+      setTimeout(() => { this.setState({isDisabledVoiceBtn: false}) }, 4000);
+    });
   }
 
   // custom function
@@ -224,21 +232,18 @@ export default class SpeechScreen extends Component<Props,States> {
       active: false
     });
   };
-  onSpeechResults(e: Voice.Results) {
-    console.error("onSpeechResults should be defined in extended class");
-  };
+  // 이거는 SpeechScreenIOS/Android 에서 정의해주는거다
+  onSpeechResults = this.props.onSpeechResults;
   startRecognizing = async () => {
     if ( this.state.selectedWord ) { return Alert.alert("유사명령어 입력중에는 포크봇을 조종할 수 없습니다"); }
     try {
-      this.setState({...this.defaultState, active: true});
       await Voice.start(Locale.ko_KR);
+      this.setState({...this.defaultState, active: true});
     } catch (e) {
       console.error(e);
     }
   };
-  async finishRecognizing() {
-    console.error("finishRecognizing should be defined in extended class");
-  };
+  finishRecognizing = this.props.finishRecognizing;
   destroyRecognizer = async () => {
     try {
       await Voice.destroy();
@@ -251,7 +256,6 @@ export default class SpeechScreen extends Component<Props,States> {
       partialResults: []
     });
   };
-  onSpeechFinish = (speechResult: string) => {}
 
   stop = async () => {
     if ( this.state.selectedWord ) { return Alert.alert("유사명령어 입력중에는 포크봇을 조종할 수 없습니다"); }

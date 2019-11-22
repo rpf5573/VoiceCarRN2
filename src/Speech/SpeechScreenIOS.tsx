@@ -26,46 +26,45 @@ import { NavigationStackScreenProps } from 'react-navigation-stack';
 type Props = NavigationStackScreenProps<{team: number, part: Part}>
 type States = {};
 export default class SpeechScreenIOS extends Component<Props,States> {
+  speech = React.createRef<SpeechScreen>();
   constructor(props: Props) {
     super(props);
   }
-  onSpeechResults(e: Voice.Results) {
-    const that : SpeechScreen = (this as any) as SpeechScreen;
+  onSpeechResults = (e: Voice.Results) => {
     console.log("onSpeechResults in SpeechScreenIOS");
     const val: string = e.value[0];
-    that.setState({
+    this.speech.current!.setState({
       result: val,
     });
   };
-  onSpeechFinish(speechResult: string) {
-    const that : SpeechScreen = (this as any) as SpeechScreen;
-    that.setState({
+  onSpeechFinish = (speechResult: string) => {
+    console.log("onSpeechFinish is called");
+    this.speech.current!.setState({
       active: false
     }, () => {
-      let result = that.getMatchedSpell(speechResult);
+      let result = this.speech.current!.getMatchedSpell(speechResult);
       if ( result.code > 0 ) {
-        that.sendCommand(result.code, result.speed, () => {
-          that.setState({
+        this.speech.current!.sendCommand(result.code, result.speed, () => {
+          this.speech.current!.setState({
             active: false,
             matchedSpellCode: 0
           });
         });
       } else {
-        that.setState({
+        this.speech.current!.setState({
           active: false,
         });
       }
     });
   }
-  async finishRecognizing() {
-    const that : SpeechScreen = (this as any) as SpeechScreen;
+  finishRecognizing = async () => {
     try {
       await Voice.cancel();
-      that.setState({
+      this.speech.current!.setState({
         active: false
       }, () => {
-        if ( that.state.result ) {
-          that.onSpeechFinish(that.state.result);
+        if ( this.speech.current!.state.result ) {
+          this.onSpeechFinish(this.speech.current!.state.result);
         }
       });
     } catch (e) {
@@ -76,6 +75,6 @@ export default class SpeechScreenIOS extends Component<Props,States> {
   render() {
     let team = this.props.navigation.getParam("team");
     let part = this.props.navigation.getParam("part");
-    return (<SpeechScreen team={team} part={part} onSpeechResults={this.onSpeechResults} finishRecognizing={this.finishRecognizing}></SpeechScreen>);
+    return (<SpeechScreen ref={this.speech} team={team} part={part} onSpeechResults={this.onSpeechResults} finishRecognizing={this.finishRecognizing}></SpeechScreen>);
   }
 }
