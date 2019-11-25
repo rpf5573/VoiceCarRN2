@@ -1,26 +1,7 @@
 import React, { Component } from "react";
 import SpeechScreen from './SpeechScreen';
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-  Alert,
-  ImageBackground,
-  Dimensions,
-  Button,
-  TextInput,
-} from "react-native";
-import {Locale, rapiURL, parts, SpeechSpellMenuButtonType, serverURL} from '../constants';
 import Voice from "react-native-voice";
-import SpeechSpellMenuButton from "./SpeechSpellMenuButton";
-import axios from "axios";
-import { Part, Spell, ISpeechScreen } from "../@types/index";
-import RecordBtn from './RecordBtn';
-import StopBtn from './StopBtn';
-import ManualRecordBtn from './ManualRecordBtn';
-import Modal from "react-native-modal";
-import {AxiosRequestConfig} from "axios";
+import { Part } from "../@types/index";
 import { NavigationStackScreenProps } from 'react-navigation-stack';
 
 type Props = NavigationStackScreenProps<{team: number, part: Part}>
@@ -30,31 +11,32 @@ export default class SpeechScreenIOS extends Component<Props,States> {
   constructor(props: Props) {
     super(props);
   }
+  processSpeechResult = (speechResult: string) => {
+    let result = this.speech.current!.getMatchedSpell(speechResult);
+    if ( result.code > 0 ) {
+      this.speech.current!.sendCommand(result.code, result.speed, () => {
+        this.speech.current!.setState({
+          active: false,
+          matchedSpellCode: 0
+        });
+      });
+    } else {
+      this.speech.current!.setState({
+        active: false,
+      });
+    }
+  }
   onSpeechResults = (e: Voice.Results) => {
-    console.log("onSpeechResults in SpeechScreenIOS");
     const val: string = e.value[0];
     this.speech.current!.setState({
       result: val,
     });
   };
   onSpeechFinish = (speechResult: string) => {
-    console.log("onSpeechFinish is called");
     this.speech.current!.setState({
       active: false
     }, () => {
-      let result = this.speech.current!.getMatchedSpell(speechResult);
-      if ( result.code > 0 ) {
-        this.speech.current!.sendCommand(result.code, result.speed, () => {
-          this.speech.current!.setState({
-            active: false,
-            matchedSpellCode: 0
-          });
-        });
-      } else {
-        this.speech.current!.setState({
-          active: false,
-        });
-      }
+      this.processSpeechResult(speechResult);
     });
   }
   finishRecognizing = async () => {

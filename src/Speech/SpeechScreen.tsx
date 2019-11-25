@@ -26,9 +26,9 @@ type Props = {
   part: Part,
   onSpeechResults: (e: Voice.Results) => void,
   finishRecognizing: () => Promise<void>,
+  onSpeechPartialResults?: (e: Voice.PartialResults) => void
 }
 type States = {
-  isDisabledVoiceBtn: boolean;
   active: boolean;
   error: string;
   result: string;
@@ -43,8 +43,8 @@ type States = {
 export default class SpeechScreen extends Component<Props,States> {
   team: number = this.props.team;
   part: Part = this.props.part;
+  isDisabledVoiceBtn: boolean = false;
   defaultState = {
-    isDisabledVoiceBtn: false,
     active: false,
     error: "",
     result: "",
@@ -73,6 +73,9 @@ export default class SpeechScreen extends Component<Props,States> {
     Voice.onSpeechEnd = this.onSpeechEnd
     Voice.onSpeechError = this.onSpeechError
     Voice.onSpeechResults = this.props.onSpeechResults
+    if ( this.props.onSpeechPartialResults ) {
+      Voice.onSpeechPartialResults = this.props.onSpeechPartialResults
+    }
 
     let spells = this.part.spells
     this.elements = [
@@ -160,20 +163,16 @@ export default class SpeechScreen extends Component<Props,States> {
     return spellMenuItmes;
   }
   handleRecordBtnClick = () => {
-    console.log("handleRecordBtnClick");
-    if ( this.state.isDisabledVoiceBtn ) {
-      console.log("지금은 누르면 안되용!");
+    if ( this.isDisabledVoiceBtn ) {
       return;
     }
-    // 너무 파바바박 누르면 렉걸리니까 이렇게 딜레이를 준다잉
-    this.setState({isDisabledVoiceBtn: true}, () => {
-      if ( this.state.active ) {
-        this.finishRecognizing();
-      } else {
-        this.startRecognizing();
-      }
-      setTimeout(() => { this.setState({isDisabledVoiceBtn: false}) }, 4000);
-    });
+    this.isDisabledVoiceBtn = true;
+    if ( this.state.active ) {
+      this.finishRecognizing();
+    } else {
+      this.startRecognizing();
+    }
+    setTimeout(() => { this.isDisabledVoiceBtn = false }, 800);
   }
 
   // custom function
@@ -186,7 +185,7 @@ export default class SpeechScreen extends Component<Props,States> {
       } else {
       }
     }).catch((err) => {
-      Alert.alert("ERROR", "통신에러");
+      Alert.alert("ERROR", "배터리 방전 / 알수없는 오류");
     });
   }
   getMatchedSpell = (spellWord: string): { code: number, speed: number } => {
@@ -194,8 +193,18 @@ export default class SpeechScreen extends Component<Props,States> {
     let speed = 0;
     spellWord = spellWord.replace(/\s/g, "");
     this.part.spells.some((i: Spell) => {
+
+      // main 검사 먼저 하고
+      if ( i.main == spellWord ) {
+        matchedSpellCode = i.code;
+        speed = i.speed;
+        return false;
+      }
+
       // 관리자가 초기값을 null로 설정하면 값이 없을수도 있응께
       if ( ! i.similar || ! Array.isArray(i.similar) ) { return false; }
+
+      // 그담에 유사단어 검사!
       i.similar.forEach((z: string) => {
         if (z == spellWord) {
           matchedSpellCode = i.code;
@@ -232,6 +241,7 @@ export default class SpeechScreen extends Component<Props,States> {
       active: false
     });
   };
+
   // 이거는 SpeechScreenIOS/Android 에서 정의해주는거다
   onSpeechResults = this.props.onSpeechResults;
   startRecognizing = async () => {

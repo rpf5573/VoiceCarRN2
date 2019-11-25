@@ -173,9 +173,6 @@ export default class RemoteControllerScreen extends React.Component<Props, State
       });
     }
 
-    console.log("code : ", code);
-    console.log("speed : ", speed);
-
     // 현재 명령을 보내고 있는지 체크
     if ( ! sendingCommand ) {
       // inactive상태의 버튼을 눌렀을때

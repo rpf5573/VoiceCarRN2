@@ -46,17 +46,21 @@ export default class PartSelectScreen extends Component<Props, States> {
     }
   }
   moveToControllerScreen = async (part: Part) => {
-    let team: number = this.props.navigation.getParam('team');
     this.toggleSpinner();
+    let team: number = this.props.navigation.getParam('team');
     let rcUsageState = this.props.navigation.getParam('rcUsageState');
     if ( rcUsageState ) {
       this.getPartSpeeds(team, part, () => {
+        this.toggleSpinner();
         this.moveToRCScreen(team, part);
       });
     } else {
-      this.getPartWords(team, part, () => {
-        this.moveToSpeechScreen(team, part);
-      })
+      this.getPartSpeeds(team, part, () => {
+        this.getPartWords(team, part, () => {
+          this.toggleSpinner();
+          this.moveToSpeechScreen(team, part);
+        });
+      });
     }
   }
   getPartWords = (team: number ,part: Part, callback: () => void ) => {
@@ -70,7 +74,6 @@ export default class PartSelectScreen extends Component<Props, States> {
     };
     console.log(config);
     axios(config).then((res) => {
-      this.toggleSpinner();
       if ( res.status == 201 ) {
         if ( res.data.error ) {
           return Alert.alert("ERROR", res.data.error);
@@ -101,7 +104,6 @@ export default class PartSelectScreen extends Component<Props, States> {
       }
     };
     axios(config).then((res) => {
-      this.toggleSpinner();
       if ( res.status == 201 ) {
         if ( res.data.error ) {
           return Alert.alert("ERROR", res.data.error);

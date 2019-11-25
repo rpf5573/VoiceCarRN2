@@ -1,71 +1,58 @@
 import React, { Component } from "react";
 import SpeechScreen from './SpeechScreen';
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-  Alert,
-  ImageBackground,
-  Dimensions,
-  Button,
-  TextInput,
-} from "react-native";
-import {Locale, rapiURL, parts, SpeechSpellMenuButtonType, serverURL} from '../constants';
 import Voice from "react-native-voice";
-import SpeechSpellMenuButton from "./SpeechSpellMenuButton";
-import axios from "axios";
-import { Part, Spell } from "../@types/index";
-import RecordBtn from './RecordBtn';
-import StopBtn from './StopBtn';
-import ManualRecordBtn from './ManualRecordBtn';
-import Modal from "react-native-modal";
-import {AxiosRequestConfig} from "axios";
+import { Part } from "../@types/index";
 import { NavigationStackScreenProps } from 'react-navigation-stack';
+import { Alert } from "react-native";
 
 type Props = NavigationStackScreenProps<{team: number, part: Part}>
-export default class SpeechScreenAndroid extends SpeechScreen {
+type States = {};
+export default class SpeechScreenAndroid extends Component<Props,States> {
+  speech = React.createRef<SpeechScreen>();
   constructor(props: Props) {
-    super({
-      team: props.navigation.getParam("team"),
-      part: props.navigation.getParam("part")
-    });
+    super(props);
+  }
+  processSpeechResult = (speechResult: string) => {
+    console.log("processSpeechResult is called");
+    let result = this.speech.current!.getMatchedSpell(speechResult);
+    if ( result.code > 0 ) {
+      this.speech.current!.sendCommand(result.code, result.speed, () => {
+        this.speech.current!.setState({
+          active: false,
+          matchedSpellCode: 0
+        });
+      });
+    } else {
+      this.speech.current!.setState({
+        active: false,
+      });
+    }
   }
   onSpeechResults = (e: Voice.Results) => {
+    console.log("onSpeechResults in SpeechScreenAndroid");
     const val: string = e.value[0];
-    this.setState({
-      result: val,
-    });
+    if ( val ) {
+      this.speech.current!.setState({
+        result: val,
+      }, () => {
+        this.processSpeechResult(this.speech.current!.state.result);
+      });
+    }
   };
-  onSpeechFinish = (result: string) => {
-    this.setState({
-      active: false
-    }, () => {
-      let result = this.getMatchedSpell(this.state.result);
-      if ( result.code > 0 ) {
-        this.sendCommand(result.code, result.speed, () => {
-          this.setState({
-            active: false,
-            matchedSpellCode: 0
-          });
-        });
-      } else {
-        this.setState({
-          active: false,
-        });
-      }
-    });
-  }
-  stopRecognizing = async () => {
-    console.log("cancelRecognizing");
+  finishRecognizing = async () => {
     try {
       await Voice.cancel();
-      if ( this.state.result ) {
-        this.onSpeechFinish(this.state.result);
-      }
+      this.speech.current!.setState({
+        ...this.speech.current!.defaultState
+      });
     } catch (e) {
       console.log('error in cancelREcogizing');
       console.error(e);
     }
   };
+  render() {
+    let team = this.props.navigation.getParam("team");
+    let part = this.props.navigation.getParam("part");
+    return (<SpeechScreen ref={this.speech} team={team} part={part} onSpeechResults={this.onSpeechResults} finishRecognizing={this.finishRecognizing}></SpeechScreen>);
+  }
 }
