@@ -201,7 +201,7 @@ export default class EntranceScreen extends Component<Props, States> {
                     disabled={this.state.submitBtnDisabled}
                     style={styles.passwordSubmitBtn}
                     onPress={() => { this.login(this.state.password) }}>
-                    <Text>Log in</Text>
+                    <Text>로그인</Text>
                   </TouchableOpacity>
                 </View>
               </View>
