@@ -61,3 +61,4 @@ buck-out/
 # Custom
 
 *.abb
+android/app/release/app-release.aab
