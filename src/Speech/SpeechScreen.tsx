@@ -193,10 +193,8 @@ export default class SpeechScreen extends Component<Props,States> {
     let speed = 0;
     spellWord = spellWord.replace(/\s/g, "");
     this.part.spells.some((i: Spell) => {
-
       // 관리자가 초기값을 null로 설정하면 값이 없을수도 있응께
       if ( ! i.similar || ! Array.isArray(i.similar) ) { return false; }
-
       // 그담에 유사단어 검사!
       i.similar.forEach((z: string) => {
         if (z == spellWord) {
