@@ -8,7 +8,7 @@ import Spinner from 'react-native-loading-spinner-overlay';
 import axios from 'axios';
 import { AxiosRequestConfig } from 'axios';
 
-type Props = NavigationStackScreenProps<{team: number, rcUsageState: number}>
+type Props = NavigationStackScreenProps<{}>
 type States = {
   part: Part | null,
   isSpinnerVisible: boolean
@@ -25,48 +25,41 @@ export default class PartSelectScreen extends Component<Props, States> {
     title: '몸체 설정'
   }
   toggleSpinner = () => { this.setState({isSpinnerVisible: !this.state.isSpinnerVisible}); }
-  moveToSpeechScreen = (team: number, part: Part) => {
-    if ( team > 0 ) {
-      this.props.navigation.push(ROUTES.SpeechScreen, {
-        part,
-        team
-      });
+  moveToSpeechScreen = (part: Part) => {
+    if ( global.team > 0 ) {
+      this.props.navigation.push(ROUTES.SpeechScreen, { part });
     } else {
       Alert.alert("ERROR", "팀이 설정되어있지 않습니다.");
     }
   }
-  moveToRCScreen = (team: number, part: Part) => {
-    if ( team > 0 ) {
-      this.props.navigation.push(ROUTES.RemoteControllerScreen, {
-        part,
-        team
-      });
+  moveToRCScreen = (part: Part) => {
+    if ( global.team > 0 ) {
+      this.props.navigation.push(ROUTES.RemoteControllerScreen, { part });
     } else {
       Alert.alert("ERROR", "팀이 설정되어있지 않습니다.");
     }
   }
   moveToControllerScreen = async (part: Part) => {
     this.toggleSpinner();
-    let team: number = this.props.navigation.getParam('team');
-    let rcUsageState = this.props.navigation.getParam('rcUsageState');
-    if ( rcUsageState ) {
-      this.getPartSpeeds(team, part, () => {
+    if ( global.rcUsageState ) {
+      this.getPartSpeeds(part, () => {
         this.toggleSpinner();
-        this.moveToRCScreen(team, part);
+        this.moveToRCScreen(part);
       });
     } else {
-      this.getPartSpeeds(team, part, () => {
-        this.getPartWords(team, part, () => {
+      this.getPartSpeeds(part, () => {
+        this.getPartWords(part, () => {
           this.toggleSpinner();
-          this.moveToSpeechScreen(team, part);
+          this.moveToSpeechScreen(part);
         });
       });
     }
   }
-  getPartWords = (team: number ,part: Part, callback: () => void ) => {
+  getPartWords = (part: Part, callback: () => void ) => {
+    const team = global.team;
     let config : AxiosRequestConfig = {
       method: 'POST',
-      url: `${serverURL}/words/getPartWords`,
+      url: `${global.serverURL()}/words/getPartWords`,
       data: {
         team,
         partCols: part.spells.map((spell) => {return spell.col})
@@ -94,10 +87,11 @@ export default class PartSelectScreen extends Component<Props, States> {
       return Alert.alert("ERROR", "알수없는에러 발생");
     });
   }
-  getPartSpeeds = (team: number ,part: Part, callback: () => void ) => {
+  getPartSpeeds = (part: Part, callback: () => void ) => {
+    const team = global.team;
     let config : AxiosRequestConfig = {
       method: 'POST',
-      url: `${serverURL}/speeds/getPartSpeeds`,
+      url: `${global.serverURL()}/speeds/getPartSpeeds`,
       data: {
         team,
         partCols: part.spells.map((spell) => {return spell.col})
@@ -125,7 +119,7 @@ export default class PartSelectScreen extends Component<Props, States> {
     });
   } 
   renderPartBoxes = (parts: Parts) => {
-    let rcUsageState = this.props.navigation.getParam('rcUsageState');
+    let rcUsageState = global.rcUsageState;
     let partBoxes = []
     partBoxes.push(<PartBox key="hand" moveToControllerScreen={this.moveToControllerScreen} part={parts.HAND} image={require('../images/hand.png')}></PartBox>);
     partBoxes.push(<PartBox key="arm" moveToControllerScreen={this.moveToControllerScreen} part={parts.ARM} image={require('../images/arm.png')}></PartBox>);

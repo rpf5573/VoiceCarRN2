@@ -174,16 +174,6 @@ enum Locale {
   zh = 'zh'
 }
 
-const rapiURL = (team: number) => {
-  // return `http://localhost:8080/command`;
-  if ( team >= 10 ) {
-    return `http://voice-car-${team}.jp.ngrok.io`;
-  }
-  return `http://voice-car-0${team}.jp.ngrok.io`;
-}
-const isDev = false;
-const serverURL = isDev ? 'http://localhost:8080' : 'http://voice-car.club';
-
 enum ROUTES {
   EntranceScreen = "EntranceScreen",
   PartSelectScreen = "PartSelectScreen",
@@ -211,8 +201,6 @@ export {
   teamColors,
   parts,
   Locale,
-  rapiURL,
-  serverURL,
   ROUTES,
   HaxagonViewType,
   RemoteBtnType,

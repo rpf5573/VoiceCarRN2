@@ -1,5 +1,17 @@
 import {SpeechSpellMenuButtonType, RemoteBtnType} from '../constants';
 
+declare global {
+  namespace NodeJS {
+    interface Global {
+      team: number,
+      group: string,
+      rcUsageState: boolean,
+      rapiURL: () => string,
+      serverURL: () => string
+    } 
+  }
+}
+
 type Spell = {
   main: string,
   col: string,

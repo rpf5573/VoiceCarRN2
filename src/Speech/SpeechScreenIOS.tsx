@@ -4,7 +4,7 @@ import Voice from "react-native-voice";
 import { Part } from "../@types/index";
 import { NavigationStackScreenProps } from 'react-navigation-stack';
 
-type Props = NavigationStackScreenProps<{team: number, part: Part}>
+type Props = NavigationStackScreenProps<{part: Part}>
 type States = {};
 export default class SpeechScreenIOS extends Component<Props,States> {
   speech = React.createRef<SpeechScreen>();
@@ -55,8 +55,7 @@ export default class SpeechScreenIOS extends Component<Props,States> {
     }
   };
   render() {
-    let team = this.props.navigation.getParam("team");
     let part = this.props.navigation.getParam("part");
-    return (<SpeechScreen ref={this.speech} team={team} part={part} onSpeechResults={this.onSpeechResults} finishRecognizing={this.finishRecognizing}></SpeechScreen>);
+    return (<SpeechScreen ref={this.speech} part={part} onSpeechResults={this.onSpeechResults} finishRecognizing={this.finishRecognizing}></SpeechScreen>);
   }
 }

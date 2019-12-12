@@ -11,7 +11,6 @@ import SpeechScreenIOS from './Speech/SpeechScreenIOS';
 import SpeechScreenAndroid from './Speech/SpeechScreenAndroid';
 import PartSelectScreen from './PartSelect/PartSelectScreen';
 import RemoteControllerScreen from './RemoteController/RemoteControllerScreen';
-import {serverURL} from './constants';
 import axios from "axios";
 import {AxiosRequestConfig} from "axios";
 import {ROUTES} from './constants';

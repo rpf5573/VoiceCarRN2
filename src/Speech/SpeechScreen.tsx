@@ -10,7 +10,7 @@ import {
   Button,
   TextInput,
 } from "react-native";
-import {Locale, rapiURL, parts, SpeechSpellMenuButtonType, serverURL} from '../constants';
+import {Locale, parts, SpeechSpellMenuButtonType} from '../constants';
 import Voice from "react-native-voice";
 import SpeechSpellMenuButton from "./SpeechSpellMenuButton";
 import axios from "axios";
@@ -22,7 +22,6 @@ import Modal from "react-native-modal";
 import {AxiosRequestConfig} from "axios";
 
 type Props = {
-  team: number,
   part: Part,
   onSpeechResults: (e: Voice.Results) => void,
   finishRecognizing: () => Promise<void>,
@@ -41,7 +40,6 @@ type States = {
 };
 
 export default class SpeechScreen extends Component<Props,States> {
-  team: number = this.props.team;
   part: Part = this.props.part;
   isDisabledVoiceBtn: boolean = false;
   defaultState = {
@@ -177,7 +175,7 @@ export default class SpeechScreen extends Component<Props,States> {
 
   // custom function
   sendCommand = (code: number, speed: number, callback?: () => void) => {
-    let url: string = `${rapiURL(this.team)}/${code}/${speed}`;
+    let url: string = `${global.rapiURL()}/${code}/${speed}`;
     console.log('url in sendCommand', url);
     axios(url).then((response) => {
       if ( response.status == 201 ) {
@@ -317,7 +315,6 @@ export default class SpeechScreen extends Component<Props,States> {
   }
   saveSimilarWord = async () => {
     // server에 먼저 업로드
-    const team = this.team;
     let {selectedWordCol: col, manualWord: similarWord} = this.state;
     if ( !col || !similarWord ) { return Alert.alert("ERROR", "다시 시도해주세요(col & similarWord is undefined)"); }
 
@@ -330,7 +327,7 @@ export default class SpeechScreen extends Component<Props,States> {
     }
 
     try {
-      let response = await this.uploadSimilarWordToServer(team, col, similarWord);
+      let response = await this.uploadSimilarWordToServer(col, similarWord);
       if ( response.status == 201 ) {
         if ( response.data.error ) { return Alert.alert("ERROR", response.data.error); }
       }
@@ -345,10 +342,11 @@ export default class SpeechScreen extends Component<Props,States> {
       console.log("err : ", err);
     }
   }
-  uploadSimilarWordToServer = async (team:number, col: string, similarWord: string) => {
+  uploadSimilarWordToServer = async (col: string, similarWord: string) => {
+    const team = global.team;
     let config: AxiosRequestConfig = {
       method: 'POST',
-      url: `${serverURL}/words/insertPartColWords`,
+      url: `${global.serverURL()}/words/insertPartColWords`,
       data: {
         col,
         team,

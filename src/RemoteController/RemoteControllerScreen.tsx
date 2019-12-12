@@ -18,7 +18,7 @@ import Modal from "react-native-modal";
 import { TextInput } from 'react-native-gesture-handler';
 import { number } from 'prop-types';
 
-type Props = NavigationStackScreenProps<{team: number, part: Part}>
+type Props = NavigationStackScreenProps<{part: Part}>
 type States = {
   activeBtnNumber: number|undefined,
   commandRightBefore: string|undefined,
@@ -43,7 +43,6 @@ export default class RemoteControllerScreen extends React.Component<Props, State
       speed: 0
     }
   }
-  team: number = this.props.navigation.getParam("team");
   part: Part = this.props.navigation.getParam("part");
   elements: any[] = [
     {type: RemoteBtnType.Empty}, {type: RemoteBtnType.SpeedInputButton} , {type: RemoteBtnType.Empty},
@@ -127,7 +126,7 @@ export default class RemoteControllerScreen extends React.Component<Props, State
     }
   }
   sendCommand = (btnNumber:number, code: number, speed: number, isStop: boolean) => {
-    var url = `${rapiURL(this.team)}/${code}/${speed}`;
+    var url = `${global.rapiURL()}/${code}/${speed}`;
     console.log("url", url);
     axios(url).then((response) => {
       if (response.status == 201) {
@@ -210,11 +209,10 @@ export default class RemoteControllerScreen extends React.Component<Props, State
     if ( speed < 1 || speed > 100 ) { return Alert.alert("ERROR", "속도값은 1 이상 100이하 여야만 합니다"); }
 
     // server에 먼저 업로드
-    const team = this.team;
     if ( !col ) { return Alert.alert("ERROR", "다시 시도해주세요(col is undefined)"); }
 
     try {
-      let response = await this.uploadSpeedToServer(team, col, speed);
+      let response = await this.uploadSpeedToServer(col, speed);
       if ( response.status == 201 ) {
         if ( response.data.error ) { return Alert.alert("ERROR", response.data.error); }
       }
@@ -226,10 +224,11 @@ export default class RemoteControllerScreen extends React.Component<Props, State
       console.log("err : ", err);
     }
   }
-  uploadSpeedToServer = async (team:number, col: string, speed: number) => {
+  uploadSpeedToServer = async (col: string, speed: number) => {
+    const team = global.team;
     let config: AxiosRequestConfig = {
       method: 'POST',
-      url: `${serverURL}/speeds/insertPartColSpeed`,
+      url: `${global.serverURL()}/speeds/insertPartColSpeed`,
       data: {
         col,
         team,

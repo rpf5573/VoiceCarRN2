@@ -1,15 +1,14 @@
 import React, {Component} from 'react';
 import {StyleSheet, View, ImageBackground, Text, TextInput, Button, TouchableOpacity, KeyboardAvoidingView, Alert, TouchableWithoutFeedback, Keyboard, Platform} from 'react-native';
 import { NavigationStackScreenProps } from 'react-navigation-stack';
-import {serverURL, rapiURL, ROUTES, parts} from '../constants';
+import { ROUTES, parts } from '../constants';
 import axios from "axios";
 import {AxiosRequestConfig} from "axios";
 
-type Props = NavigationStackScreenProps<{team: number}>
+type Props = NavigationStackScreenProps<{}>
 type States = {
   password: string,
   submitBtnDisabled: boolean,
-  rcUsageState: boolean|null
 }
 
 export default class EntranceScreen extends Component<Props, States> {
@@ -21,47 +20,25 @@ export default class EntranceScreen extends Component<Props, States> {
     this.state = {
       password: '',
       submitBtnDisabled: false,
-      rcUsageState: null
     }
   }
 
-  componentDidMount() {
-    axios(`${serverURL}/user/initialState`).then((response) => {
-      if (response.status == 201) {
-        if (response.data.error) {
-          Alert.alert(response.data.error);
-          return;
-        }        
-        let rcUsageState = parseInt(response.data.rcUsageState) ? true : false;
-        this.setState({rcUsageState});
-      } else {
-        Alert.alert("ERROR", "서버에 문제가 있습니다");
-      }
-    }).catch((err) => {
-      console.error(err);
-      Alert.alert("ERROR", err.message);
-    });
-  }
-  moveToPartSelectScreen(team: number, rcUsageState: boolean) {
-    this.props.navigation.push(ROUTES.PartSelectScreen, { team, rcUsageState });
+  moveToPartSelectScreen() {
+    this.props.navigation.push(ROUTES.PartSelectScreen, {});
   }
   login(password: string) {
-    if (password == "testmode1") {
-      setInterval(() => {
-        this.testmode(1);
-      }, 30000);
-      // this.testmode(1);
-      return;
-    } else if (password == "testmode2") {
-      this.testmode(2);
+    global.group = password.substring(0, 1); // group setting
+    if ( ! ["a", "b"].includes(global.group) ) {
+      Alert.alert("ERROR", "비밀번호의 시작은 a혹은 b로 시작해야합니다.");
       return;
     }
+
     this.setState({
       submitBtnDisabled: true
     });
     let config: AxiosRequestConfig = {
       method: 'POST',
-      url: `${serverURL}/user/login`,
+      url: `${global.serverURL()}/user/login`,
       data: {
         password
       }
@@ -75,7 +52,9 @@ export default class EntranceScreen extends Component<Props, States> {
           // Alert.alert(response.data.error);
           return;
         }
-        this.moveToPartSelectScreen(response.data.team, this.state.rcUsageState!);
+        global.team = response.data.team; // team setting
+        global.rcUsageState = parseInt(response.data.rcUsageState) ? true : false; // rcUsageState setting
+        this.moveToPartSelectScreen();
       } else {
         Alert.alert("ERROR", "서버에 문제가 있습니다");
       }
@@ -186,33 +165,28 @@ export default class EntranceScreen extends Component<Props, States> {
     });
   }
   render() {
-    if ( this.state.rcUsageState != null ) {
-      return (
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} enabled>
-          <ImageBackground source={require("../images/background.jpeg")} style={styles.backgroundImage}>
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <View style={styles.container}>
-                <View style={styles.passwordContainer}>
-                  <TextInput style={styles.passwordInput}
-                    placeholder="비밀번호 입력"
-                    onChangeText={(text) => {this.setState({password: text})}}
-                    underlineColorAndroid='transparent'/>
-                  <TouchableOpacity
-                    disabled={this.state.submitBtnDisabled}
-                    style={styles.passwordSubmitBtn}
-                    onPress={() => { this.login(this.state.password) }}>
-                    <Text>로그인</Text>
-                  </TouchableOpacity>
-                </View>
+    return (
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} enabled>
+        <ImageBackground source={require("../images/background.jpeg")} style={styles.backgroundImage}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.container}>
+              <View style={styles.passwordContainer}>
+                <TextInput style={styles.passwordInput}
+                  placeholder="비밀번호 입력"
+                  onChangeText={(text) => {this.setState({password: text})}}
+                  underlineColorAndroid='transparent'/>
+                <TouchableOpacity
+                  disabled={this.state.submitBtnDisabled}
+                  style={styles.passwordSubmitBtn}
+                  onPress={() => { this.login(this.state.password) }}>
+                  <Text>로그인</Text>
+                </TouchableOpacity>
               </View>
-            </TouchableWithoutFeedback>
-          </ImageBackground>
-        </KeyboardAvoidingView>
-      );
-    }
-    else {
-      return (<View></View>)
-    }
+            </View>
+          </TouchableWithoutFeedback>
+        </ImageBackground>
+      </KeyboardAvoidingView>
+    );
   }
 }
 
