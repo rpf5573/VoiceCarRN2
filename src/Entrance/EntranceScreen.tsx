@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {StyleSheet, View, ImageBackground, Text, TextInput, Button, TouchableOpacity, KeyboardAvoidingView, Alert, TouchableWithoutFeedback, Keyboard, Platform} from 'react-native';
 import { NavigationStackScreenProps } from 'react-navigation-stack';
+import '../global';
 import { ROUTES, parts } from '../constants';
 import axios from "axios";
 import {AxiosRequestConfig} from "axios";
@@ -27,6 +28,7 @@ export default class EntranceScreen extends Component<Props, States> {
     this.props.navigation.push(ROUTES.PartSelectScreen, {});
   }
   login(password: string) {
+    password = password.toLowerCase();
     global.group = password.substring(0, 1); // group setting
     if ( ! ["a", "b"].includes(global.group) ) {
       Alert.alert("ERROR", "비밀번호의 시작은 a혹은 b로 시작해야합니다.");
@@ -49,6 +51,7 @@ export default class EntranceScreen extends Component<Props, States> {
       });
       if (response.status == 201) {
         if (response.data.error) {
+          console.log("error", response.data.error);
           // Alert.alert(response.data.error);
           return;
         }
@@ -60,7 +63,11 @@ export default class EntranceScreen extends Component<Props, States> {
       }
     }).catch((err) => {
       console.log(err);
-      Alert.alert("ERROR", "알수없는 에러가 발생했습니다");
+      this.setState({
+        submitBtnDisabled: false
+      }, () => {
+        Alert.alert("ERROR", "알수없는 에러가 발생했습니다");
+      });
     });
   }
   testmode(t: number) {

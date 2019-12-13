@@ -1,4 +1,5 @@
-import './@types/index';
+import './@types/index.d';
+
 global.team = 0;
 global.group = 'a';
 global.rcUsageState = false;
