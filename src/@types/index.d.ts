@@ -6,6 +6,7 @@ declare global {
       team: number,
       group: string,
       rcUsageState: boolean,
+      userCanEditSpeedAndWords: boolean,
       rapiURL: () => string,
       serverURL: () => string
     } 

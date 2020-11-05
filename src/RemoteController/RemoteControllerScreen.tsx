@@ -45,13 +45,13 @@ export default class RemoteControllerScreen extends React.Component<Props, State
   }
   part: Part = this.props.navigation.getParam("part");
   elements: any[] = [
-    {type: RemoteBtnType.Empty}, {type: RemoteBtnType.SpeedInputButton} , {type: RemoteBtnType.Empty},
+    {type: RemoteBtnType.Empty}, {type: (global.userCanEditSpeedAndWords ? RemoteBtnType.SpeedInputButton : RemoteBtnType.PlaceHoldImage)} , {type: RemoteBtnType.Empty},
     {type: RemoteBtnType.Text, text: "펴"}, {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "접어"},
     {type: RemoteBtnType.Text, text: "들어"}, {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "내려"},
     {type: RemoteBtnType.Empty}, {type: RemoteBtnType.Text, text: "빠르게"}, {type: RemoteBtnType.Empty},
     {type: RemoteBtnType.Text, text: "왼쪽"}, {type: RemoteBtnType.Text, text: "앞으로"}, {type: RemoteBtnType.Text, text: "오른쪽"},
     {type: RemoteBtnType.PlaceHoldImage}, {type: RemoteBtnType.Text, text: "뒤로"}, {type: RemoteBtnType.PlaceHoldImage}
-  ]
+  ];
   setElements = () => {
     if ( this.part == parts.ARM ) {
       this.elements[3].text = '팔펴'; // part.main에는 팔펴가 들어있을거거든!
@@ -286,7 +286,7 @@ export default class RemoteControllerScreen extends React.Component<Props, State
       }
       items.push(
         <View style={styles.box} key={index}>
-          <RemoteControlBtn type={value.type} text={value.text} code={value.code} speed={value.speed} onPress={ value.type == RemoteBtnType.SpeedInputButton ? this.handleClickSpeedEditButton : this.handleClickBtn} btnNumber={index+1} strokeColor={strokeColor}></RemoteControlBtn>
+          <RemoteControlBtn type={value.type} text={value.text} code={value.code} speed={value.speed} onPress={ (value.type == RemoteBtnType.SpeedInputButton) ? this.handleClickSpeedEditButton : this.handleClickBtn} btnNumber={index+1} strokeColor={strokeColor}></RemoteControlBtn>
         </View>
       );
     }

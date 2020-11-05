@@ -124,7 +124,10 @@ export default class SpeechScreen extends Component<Props,States> {
           <View style={styles.bottom}>
             <RecordBtn onPress={this.handleRecordBtnClick} style={styles.haxagonBtn} backgroundColor={ this.state.active ? 'blue' : weakRed}></RecordBtn>
             <StopBtn style={styles.haxagonBtn} backgroundColor='red' onPress={this.stop}></StopBtn>
-            <ManualRecordBtn style={styles.haxagonBtn} backgroundColor={weakRed} onPress={this.toggleManualRecordModal} strokColor={this.state.selectedWord ? 'aqua' : undefined}></ManualRecordBtn>
+            {
+              global.userCanEditSpeedAndWords && 
+              <ManualRecordBtn style={styles.haxagonBtn} backgroundColor={weakRed} onPress={this.toggleManualRecordModal} strokColor={this.state.selectedWord ? 'aqua' : undefined}></ManualRecordBtn>
+            }
           </View>
         </View>
         <Modal isVisible={this.state.isManualRecordModalVisible} onBackdropPress={this.toggleManualRecordModal} style={styles.modalContainer}>

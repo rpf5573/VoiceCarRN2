@@ -56,6 +56,7 @@ export default class EntranceScreen extends Component<Props, States> {
           return;
         }
         global.team = response.data.team; // team setting
+        global.userCanEditSpeedAndWords = parseInt(response.data.userCanEditSpeedAndWords) ? true : false
         global.rcUsageState = parseInt(response.data.rcUsageState) ? true : false; // rcUsageState setting
         this.moveToPartSelectScreen();
       } else {

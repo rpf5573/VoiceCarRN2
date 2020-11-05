@@ -10,7 +10,7 @@ global.rapiURL = () => {
   return `http://voice-car-${global.group}-0${global.team}.jp.ngrok.io`;
 }
 global.serverURL = () => {
-  const isDev = false;
+  const isDev = true;
   if ( isDev ) {
     return 'http://localhost:8080';
   }

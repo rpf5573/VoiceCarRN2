@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {StyleSheet, View, ImageBackground, Alert} from 'react-native';
 import { NavigationStackScreenProps } from 'react-navigation-stack';
-import {parts, ROUTES, serverURL} from '../constants';
+import {parts, ROUTES} from '../constants';
 import PartBox from './PartBox';
 import {Part, Parts} from '../@types/index';
 import Spinner from 'react-native-loading-spinner-overlay';
@@ -41,6 +41,7 @@ export default class PartSelectScreen extends Component<Props, States> {
   }
   moveToControllerScreen = async (part: Part) => {
     this.toggleSpinner();
+    console.log("global.rcUsageState", global.rcUsageState);
     if ( global.rcUsageState ) {
       this.getPartSpeeds(part, () => {
         this.toggleSpinner();
